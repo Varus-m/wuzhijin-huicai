@@ -233,6 +233,167 @@ class SnowbeastsAPI:
             print(f"响应解析失败: {e}")
             return {"error": "响应格式错误"}
     
+    def get_sales_order_lines(self, 
+                             sales_order_id: str,
+                             app_name: str = "SnowInventory-82886",
+                             page: int = 0,
+                             page_size: int = 20,
+                             orderby: str = "") -> Dict[str, Any]:
+        """
+        获取销售订单行数据（自动登录）
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        columns = [
+            "image", "productCode", "warehouseId", "productId", "productName", 
+            "productCategory", "productCategory1", "field", "brand", "spec", 
+            "weight", "weightAmount", "weightUnitId", "skuProp", "skuCode", 
+            "skuData", "stockQuantity", "availableQuantity", "quantity", 
+            "salesOrderId", "salesOrderCode", "shippedQuantity", "shippingQuantity", 
+            "returnedQuantity", "returningQuantity", "refundedQuantity", 
+            "refundingQuantity", "requisitionedQuantity", "unRequisitionedQuantity", 
+            "producingQuantity", "producedQuantity", "unProducedQuantity", 
+            "defaultUnitId", "customerId", "date", "unitRatio", "userId", 
+            "ownerId", "shareUserIds", "status", "vat", "priceMethod", 
+            "currency", "exchangeRate", "cost", "noTaxPrice", "price", 
+            "discount", "discountPrice", "rmbPrice", "taxRate", "noTaxAmount", 
+            "amount", "grossProfit", "rmbAmount", "unitId", "produceType", 
+            "deliveryDate", "stockOutDate", "remark", "companyId", "projectId", 
+            "supplierId", "purchasingOrderId"
+        ]
+        
+        return self.get_sales_order_page_list(
+            form_id=100185,
+            condition={"form.id": sales_order_id},
+            columns=columns,
+            page=page,
+            page_size=page_size,
+            filters={}
+        )
+    
+    def get_order_with_lines(self, sales_order_id: str) -> Dict[str, Any]:
+        """
+        获取销售订单及其订单行的完整信息（自动登录）
+        
+        Args:
+            sales_order_id: 销售订单ID
+        
+        Returns:
+            包含订单头和订单行的完整信息
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        result = {
+            "order_header": None,
+            "order_lines": None,
+            "error": None
+        }
+        
+        try:
+            # 首先获取订单头信息（通过ID过滤）
+            order_filter = {"id": [sales_order_id]}
+            header_result = self.get_sales_order_page_list(filters=order_filter, page_size=1)
+            
+            if "error" in header_result:
+                result["error"] = f"获取订单头失败: {header_result['error']}"
+                return result
+            
+            if "data" in header_result and header_result["data"].get("_dataList"):
+                result["order_header"] = header_result["data"]["_dataList"][0]
+            
+            # 然后获取订单行信息
+            lines_result = self.get_sales_order_lines(sales_order_id)
+            
+            if "error" in lines_result:
+                result["error"] = f"获取订单行失败: {lines_result['error']}"
+                return result
+            
+            result["order_lines"] = lines_result
+            
+            return result
+            
+        except Exception as e:
+            result["error"] = f"获取订单完整信息失败: {str(e)}"
+            return {"error": "响应格式错误"}
+
+    def get_sales_order_products(self, sales_order_id: str, app_name: str = "SnowInventory-82886") -> Dict[str, Any]:
+        """
+        获取销售订单关联的产品信息（自动登录）
+        
+        Args:
+            sales_order_id: 销售订单ID（作为form.id）
+            app_name: 应用名称，默认为 "SnowInventory-82886"
+        
+        Returns:
+            销售订单产品信息数据
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        # 构建查询条件
+        condition = {
+            "form.id": sales_order_id
+        }
+        
+        # 完整的字段列表
+        columns = [
+            "image", "productCode", "warehouseId", "productId", "productName", 
+            "productCategory", "productCategory1", "field", "brand", "spec", 
+            "weight", "weightAmount", "weightUnitId", "skuProp", "skuCode", 
+            "skuData", "stockQuantity", "availableQuantity", "quantity", 
+            "salesOrderId", "salesOrderCode", "shippedQuantity", "shippingQuantity", 
+            "returnedQuantity", "returningQuantity", "refundedQuantity", 
+            "refundingQuantity", "requisitionedQuantity", "unRequisitionedQuantity", 
+            "producingQuantity", "producedQuantity", "unProducedQuantity", 
+            "defaultUnitId", "customerId", "date", "unitRatio", "userId", 
+            "ownerId", "shareUserIds", "status", "vat", "priceMethod", 
+            "currency", "exchangeRate", "cost", "noTaxPrice", "price", 
+            "discount", "discountPrice", "rmbPrice", "taxRate", "noTaxAmount", 
+            "amount", "grossProfit", "rmbAmount", "unitId", "produceType", 
+            "deliveryDate", "stockOutDate", "remark", "companyId", "projectId", 
+            "supplierId", "purchasingOrderId"
+        ]
+        
+        payload = {
+            "appName": app_name,
+            "formId": 100185,  # 销售订单产品的formId
+            "condition": condition,
+            "columns": columns,
+            "page": 0,
+            "pageSize": 20,
+            "filters": {},
+            "orderby": ""
+        }
+        
+        request_headers = {
+            'Content-Type': 'application/json',
+            'Cookie': f'JSESSIONID={self.app_jsessionid}; sid={self.sid}'
+        }
+        
+        url = "http://saas.snowbeasts.com/business/getBusinessPageList"
+        
+        try:
+            response = self.session.post(
+                url,
+                json=payload,
+                headers=request_headers
+            )
+            
+            response.raise_for_status()
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"获取销售订单产品信息请求失败: {e}")
+            return {"error": str(e)}
+        except json.JSONDecodeError as e:
+            print(f"响应解析失败: {e}")
+            return {"error": "响应格式错误"}
+    
     def find_customer_by_invite_code(self, invite_code: str) -> Dict[str, Any]:
         """
         根据微信邀请码查找客户
