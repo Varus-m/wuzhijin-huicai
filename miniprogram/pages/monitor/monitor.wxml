@@ -1,0 +1,145 @@
+<view class="container">
+  <!-- 系统状态总览 -->
+  <view class="status-overview">
+    <view class="status-card {{systemStatus}}">
+      <view class="status-icon">
+        <image src="{{systemStatusIcon}}"></image>
+      </view>
+      <view class="status-info">
+        <text class="status-title">系统状态</text>
+        <text class="status-text">{{systemStatusText}}</text>
+        <text class="status-time">{{lastCheckTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 接口监控 -->
+  <view class="monitor-section">
+    <view class="section-header">
+      <text class="section-title">接口监控</text>
+      <view class="refresh-btn" bindtap="onRefresh">
+        <image class="refresh-icon" src="/images/icon-refresh.png"></image>
+        <text class="refresh-text">刷新</text>
+      </view>
+    </view>
+    
+    <view class="monitor-cards">
+      <view class="monitor-card">
+        <view class="card-header">
+          <text class="card-title">ERP系统</text>
+          <view class="status-indicator {{erpStatus}}"></view>
+        </view>
+        <view class="card-content">
+          <view class="metric-item">
+            <text class="metric-label">响应时间</text>
+            <text class="metric-value">{{erpResponseTime}}ms</text>
+          </view>
+          <view class="metric-item">
+            <text class="metric-label">成功率</text>
+            <text class="metric-value">{{erpSuccessRate}}%</text>
+          </view>
+          <view class="metric-item">
+            <text class="metric-label">今日请求</text>
+            <text class="metric-value">{{erpTodayRequests}}</text>
+          </view>
+        </view>
+      </view>
+      
+      <view class="monitor-card">
+        <view class="card-header">
+          <text class="card-title">微信API</text>
+          <view class="status-indicator {{wechatStatus}}"></view>
+        </view>
+        <view class="card-content">
+          <view class="metric-item">
+            <text class="metric-label">响应时间</text>
+            <text class="metric-value">{{wechatResponseTime}}ms</text>
+          </view>
+          <view class="metric-item">
+            <text class="metric-label">成功率</text>
+            <text class="metric-value">{{wechatSuccessRate}}%</text>
+          </view>
+          <view class="metric-item">
+            <text class="metric-label">今日调用</text>
+            <text class="metric-value">{{wechatTodayCalls}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 性能指标 -->
+  <view class="performance-section">
+    <view class="section-header">
+      <text class="section-title">性能指标</text>
+    </view>
+    
+    <view class="performance-charts">
+      <view class="chart-container">
+        <text class="chart-title">响应时间趋势</text>
+        <canvas canvas-id="responseTimeChart" class="response-time-chart"></canvas>
+      </view>
+      
+      <view class="chart-container">
+        <text class="chart-title">请求量统计</text>
+        <canvas canvas-id="requestCountChart" class="request-count-chart"></canvas>
+      </view>
+    </view>
+    
+    <view class="performance-metrics">
+      <view class="metric-card">
+        <text class="metric-title">平均响应时间</text>
+        <text class="metric-value">{{avgResponseTime}}ms</text>
+        <text class="metric-trend {{avgResponseTimeTrend}}">{{avgResponseTimeTrendText}}</text>
+      </view>
+      
+      <view class="metric-card">
+        <text class="metric-title">平均成功率</text>
+        <text class="metric-value">{{avgSuccessRate}}%</text>
+        <text class="metric-trend {{avgSuccessRateTrend}}">{{avgSuccessRateTrendText}}</text>
+      </view>
+      
+      <view class="metric-card">
+        <text class="metric-title">总请求量</text>
+        <text class="metric-value">{{totalRequests}}</text>
+        <text class="metric-trend {{totalRequestsTrend}}">{{totalRequestsTrendText}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 错误日志 -->
+  <view class="logs-section">
+    <view class="section-header">
+      <text class="section-title">错误日志</text>
+      <view class="view-all-btn" bindtap="onViewAllLogs">
+        <text class="view-all-text">查看全部</text>
+        <image class="arrow-icon" src="/images/icon-arrow-right.png"></image>
+      </view>
+    </view>
+    
+    <view class="logs-list">
+      <view wx:if="{{errorLogs.length === 0}}" class="no-logs">
+        <text class="no-logs-text">暂无错误日志</text>
+      </view>
+      
+      <view wx:else class="log-items">
+        <view class="log-item" wx:for="{{errorLogs}}" wx:key="logId">
+          <view class="log-header">
+            <text class="log-time">{{item.time}}</text>
+            <text class="log-level {{item.level}}">{{item.levelText}}</text>
+          </view>
+          <text class="log-message">{{item.message}}</text>
+          <text class="log-source">{{item.source}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{isLoading}}">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{loadingText}}</text>
+  </view>
+</view>

@@ -1,0 +1,56 @@
+<view class="login-container">
+  <view class="header-section">
+    <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
+    <text class="title">零材料货物追踪</text>
+    <text class="subtitle">实时追踪您的订单状态</text>
+  </view>
+
+  <view class="content-section">
+    <view class="feature-list">
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icon-order.png"></image>
+        <text class="feature-text">订单状态实时查询</text>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icon-notification.png"></image>
+        <text class="feature-text">状态变更及时通知</text>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/images/icon-tracking.png"></image>
+        <text class="feature-text">多物料批量追踪</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-section">
+    <button class="login-btn" open-type="getPhoneNumber" bindgetphonenumber="onGetPhoneNumber">
+      <text class="btn-text">微信手机号一键登录</text>
+    </button>
+    <view class="privacy-text">
+      <text>登录即表示同意</text>
+      <text class="link" bindtap="onPrivacyTap">《隐私政策》</text>
+      <text>和</text>
+      <text class="link" bindtap="onTermsTap">《服务条款》</text>
+    </view>
+  </view>
+
+  <view class="erp-bind-section" wx:if="{{showErpBind}}">
+    <view class="bind-modal">
+      <view class="modal-header">
+        <text class="modal-title">绑定企业信息</text>
+        <image class="close-btn" src="/images/icon-close.png" bindtap="onCloseErpBind"></image>
+      </view>
+      <view class="modal-content">
+        <input class="input-field" placeholder="请输入微信邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" />
+        <button class="bind-btn" bindtap="onBindCompany">绑定</button>
+      </view>
+    </view>
+  </view>
+</view>
+
+<view class="loading-overlay" wx:if="{{isLoading}}">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{loadingText}}</text>
+  </view>
+</view>

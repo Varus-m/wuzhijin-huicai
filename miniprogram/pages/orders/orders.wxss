@@ -1,0 +1,20 @@
+.container{padding:12px}
+.search-section{margin-bottom:8px}
+.search-bar{display:flex;gap:8px}
+.search-input{flex:1;border:1px solid #e5e5e5;border-radius:6px;padding:8px}
+.search-btn{padding:8px 12px;border-radius:6px;background:#1890FF;color:#fff}
+.status-filter{display:flex;margin-top:8px}
+.filter-item{padding:6px 10px;border:1px solid #e5e5e5;border-radius:16px;margin-right:8px}
+.filter-item.active{background:#1890FF;color:#fff;border-color:#1890FF}
+.order-list{height:calc(100vh - 180rpx)}
+.order-item{border:1px solid #f0f0f0;border-radius:8px;padding:10px;margin-bottom:10px}
+.order-header{display:flex;justify-content:space-between;margin-bottom:6px}
+.order-progress{display:flex;align-items:center;gap:8px;margin-top:6px}
+.progress-bar{width:60%;height:6px;background:#f5f5f5;border-radius:6px}
+.progress-fill{height:6px;background:#52c41a;border-radius:6px}
+.empty-state{padding:24px;text-align:center;color:#888}
+.quick-actions{position:fixed;right:12px;bottom:24px}
+.action-btn{background:#fff;border:1px solid #e5e5e5;border-radius:20px;padding:8px 16px}
+.loading-overlay{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(255,255,255,0.6);display:flex;justify-content:center;align-items:center}
+.loading-text{color:#666}
+

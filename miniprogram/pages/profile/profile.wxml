@@ -1,0 +1,171 @@
+<view class="container">
+  <!-- 用户信息卡片 -->
+  <view class="user-card">
+    <view class="user-avatar">
+      <image class="avatar-img" src="{{userInfo.avatarUrl || '/images/default-avatar.png'}}"></image>
+    </view>
+    <view class="user-info">
+      <text class="user-name">{{userInfo.nickName || '微信用户'}}</text>
+      <text class="user-phone">{{userInfo.phoneNumber || '未绑定手机号'}}</text>
+      <text class="user-bind-status {{isErpBound ? 'bound' : 'unbound'}}">
+        {{isErpBound ? '已绑定企业' : '未绑定企业'}}
+      </text>
+    </view>
+  </view>
+
+  <!-- 企业信息 -->
+  <view class="enterprise-section" wx:if="{{isErpBound}}">
+    <view class="section-header">
+      <text class="section-title">企业信息</text>
+      <view class="edit-btn" bindtap="onEditEnterprise">
+        <image class="edit-icon" src="/images/icon-edit.png"></image>
+        <text class="edit-text">编辑</text>
+      </view>
+    </view>
+    
+    <view class="enterprise-info">
+      <view class="info-item">
+        <text class="info-label">企业编码：</text>
+        <text class="info-value">{{enterpriseInfo.code}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">企业名称：</text>
+        <text class="info-value">{{enterpriseInfo.name}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">客户ID：</text>
+        <text class="info-value">{{enterpriseInfo.customerId}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-label">绑定时间：</text>
+        <text class="info-value">{{enterpriseInfo.bindTime}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能菜单 -->
+  <view class="menu-section">
+    <view class="menu-item" bindtap="onNotificationSettings">
+      <view class="menu-icon">
+        <image src="/images/icon-notification-settings.png"></image>
+      </view>
+      <text class="menu-text">通知设置</text>
+      <view class="menu-arrow">
+        <image src="/images/icon-arrow-right.png"></image>
+      </view>
+    </view>
+    
+    <view class="menu-item" bindtap="onPrivacySettings">
+      <view class="menu-icon">
+        <image src="/images/icon-privacy.png"></image>
+      </view>
+      <text class="menu-text">隐私设置</text>
+      <view class="menu-arrow">
+        <image src="/images/icon-arrow-right.png"></image>
+      </view>
+    </view>
+    
+    <view class="menu-item" bindtap="onAbout">
+      <view class="menu-icon">
+        <image src="/images/icon-about.png"></image>
+      </view>
+      <text class="menu-text">关于我们</text>
+      <view class="menu-arrow">
+        <image src="/images/icon-arrow-right.png"></image>
+      </view>
+    </view>
+    
+    <view class="menu-item" bindtap="onHelp">
+      <view class="menu-icon">
+        <image src="/images/icon-help.png"></image>
+      </view>
+      <text class="menu-text">帮助中心</text>
+      <view class="menu-arrow">
+        <image src="/images/icon-arrow-right.png"></image>
+      </view>
+    </view>
+  </view>
+
+  <!-- 操作按钮 -->
+  <view class="action-section">
+    <button class="action-btn primary" bindtap="onRebindEnterprise" wx:if="{{isErpBound}}">
+      <text class="btn-text">重新绑定企业</text>
+    </button>
+    <button class="action-btn primary" bindtap="onBindEnterprise" wx:else>
+      <text class="btn-text">绑定企业信息</text>
+    </button>
+    
+    <button class="action-btn secondary" bindtap="onLogout">
+      <text class="btn-text">退出登录</text>
+    </button>
+  </view>
+</view>
+
+<!-- 编辑企业信息弹窗 -->
+<view class="edit-modal" wx:if="{{showEditModal}}" catchtouchmove="true">
+  <view class="modal-overlay" bindtap="onCloseEditModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">编辑企业信息</text>
+      <image class="close-btn" src="/images/icon-close.png" bindtap="onCloseEditModal"></image>
+    </view>
+    
+    <view class="modal-body">
+      <view class="input-group">
+        <text class="input-label">微信邀请码</text>
+        <input class="input-field" placeholder="请输入微信邀请码" value="{{editForm.inviteCode}}" bindinput="onInviteCodeInput" />
+      </view>
+    </view>
+    
+    <view class="modal-footer">
+      <button class="btn-cancel" bindtap="onCloseEditModal">取消</button>
+      <button class="btn-confirm" bindtap="onSaveEnterprise">保存</button>
+    </view>
+  </view>
+</view>
+
+<!-- 通知设置弹窗 -->
+<view class="settings-modal" wx:if="{{showNotificationModal}}" catchtouchmove="true">
+  <view class="modal-overlay" bindtap="onCloseNotificationModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">通知设置</text>
+      <image class="close-btn" src="/images/icon-close.png" bindtap="onCloseNotificationModal"></image>
+    </view>
+    
+    <scroll-view class="settings-body" scroll-y="true">
+      <view class="setting-group">
+        <text class="group-title">订单状态通知</text>
+        <view class="setting-item">
+          <text class="setting-label">订单状态变更</text>
+          <switch checked="{{notificationSettings.orderStatus}}" bindchange="onOrderStatusChange" />
+        </view>
+        <view class="setting-item">
+          <text class="setting-label">生产进度提醒</text>
+          <switch checked="{{notificationSettings.productionProgress}}" bindchange="onProductionProgressChange" />
+        </view>
+        <view class="setting-item">
+          <text class="setting-label">发货通知</text>
+          <switch checked="{{notificationSettings.shipping}}" bindchange="onShippingChange" />
+        </view>
+      </view>
+      
+      <view class="setting-group">
+        <text class="group-title">系统通知</text>
+        <view class="setting-item">
+          <text class="setting-label">系统维护通知</text>
+          <switch checked="{{notificationSettings.systemMaintenance}}" bindchange="onSystemMaintenanceChange" />
+        </view>
+        <view class="setting-item">
+          <text class="setting-label">重要公告</text>
+          <switch checked="{{notificationSettings.importantAnnouncements}}" bindchange="onImportantAnnouncementsChange" />
+        </view>
+      </view>
+    </scroll-view>
+    
+    <view class="modal-footer">
+      <button class="btn-cancel" bindtap="onCloseNotificationModal">取消</button>
+      <button class="btn-confirm" bindtap="onSaveNotificationSettings">保存</button>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,77 @@
+<view class="container">
+
+  <!-- 订单列表 -->
+  <scroll-view class="order-list" scroll-y="true" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onLoadMore">
+    <view wx:if="{{orderList.length === 0 && !isLoading}}" class="empty-state">
+      <image class="empty-icon" src="/images/icon-empty.png"></image>
+      <text class="empty-text">暂无订单数据</text>
+      <text class="empty-subtext">您可以尝试搜索或下拉刷新</text>
+    </view>
+    
+    <view wx:else class="order-items">
+      <view class="order-item" wx:for="{{orderList}}" wx:key="orderId" data-order="{{item}}" bindtap="onOrderClick">
+        <view class="order-header">
+          <text class="order-no">订单号：{{item.orderNo}}</text>
+          <text class="order-status {{item.status}}">{{item.statusText}}</text>
+        </view>
+        
+        <view class="order-info">
+          <view class="info-item">
+            <text class="info-label">客户：</text>
+            <text class="info-value">{{item.customerName}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">下单时间：</text>
+            <text class="info-value">{{item.orderDate}}</text>
+          </view>
+          <view class="info-item">
+            <text class="info-label">物料数量：</text>
+            <text class="info-value">{{item.materialCount}}种</text>
+          </view>
+        </view>
+        
+        <view class="material-preview">
+          <view class="material-item" wx:for="{{item.materials.slice(0, 3)}}" wx:key="materialId" wx:for-item="material">
+            <text class="material-code">{{material.code}}</text>
+            <text class="material-status {{material.status}}">{{material.statusText}}</text>
+          </view>
+          <text wx:if="{{item.materials.length > 3}}" class="material-more">+{{item.materials.length - 3}}更多</text>
+        </view>
+        
+        <view class="order-progress">
+          <view class="progress-bar">
+            <view class="progress-fill" style="width: {{item.progress}}%"></view>
+          </view>
+          <text class="progress-text">{{item.progress}}%</text>
+        </view>
+      </view>
+      
+      <view wx:if="{{isLoadingMore}}" class="loading-more">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">加载中...</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{isLoading && !isRefreshing}}">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{loadingText}}</text>
+  </view>
+</view>
+
+<!-- 企业绑定弹窗（样式沿用登录页） -->
+<view class="erp-bind-section" wx:if="{{showBindCompany}}">
+  <view class="bind-modal">
+    <view class="modal-header">
+      <text class="modal-title">绑定企业信息</text>
+      <image class="close-btn" src="/images/icon-close.png" bindtap="onCloseBindCompany"></image>
+    </view>
+    <view class="modal-content">
+      <input class="input-field" placeholder="请输入微信邀请码" value="{{inviteCode}}" bindinput="onInviteCodeInput" />
+      <button class="bind-btn" bindtap="onBindCompanyTap">绑定</button>
+    </view>
+  </view>
+  </view>

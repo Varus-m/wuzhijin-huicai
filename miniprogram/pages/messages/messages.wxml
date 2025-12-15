@@ -1,0 +1,139 @@
+<view class="container">
+  <!-- 消息统计 -->
+  <view class="stats-section">
+    <view class="stat-item">
+      <text class="stat-number">{{unreadCount}}</text>
+      <text class="stat-label">未读消息</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{totalCount}}</text>
+      <text class="stat-label">总消息数</text>
+    </view>
+    <view class="stat-item">
+      <text class="stat-number">{{todayCount}}</text>
+      <text class="stat-label">今日消息</text>
+    </view>
+  </view>
+
+  <!-- 消息筛选 -->
+  <view class="filter-section">
+    <scroll-view class="type-filter" scroll-x="true">
+      <view class="filter-item {{currentType === 'all' ? 'active' : ''}}" data-type="all" bindtap="onTypeFilter">
+        <text class="filter-text">全部</text>
+      </view>
+      <view class="filter-item {{currentType === 'order_status' ? 'active' : ''}}" data-type="order_status" bindtap="onTypeFilter">
+        <text class="filter-text">订单状态</text>
+      </view>
+      <view class="filter-item {{currentType === 'shipping' ? 'active' : ''}}" data-type="shipping" bindtap="onTypeFilter">
+        <text class="filter-text">发货通知</text>
+      </view>
+      <view class="filter-item {{currentType === 'production' ? 'active' : ''}}" data-type="production" bindtap="onTypeFilter">
+        <text class="filter-text">生产提醒</text>
+      </view>
+      <view class="filter-item {{currentType === 'system' ? 'active' : ''}}" data-type="system" bindtap="onTypeFilter">
+        <text class="filter-text">系统通知</text>
+      </view>
+    </scroll-view>
+    
+    <view class="action-buttons">
+      <view class="action-btn" bindtap="onMarkAllRead">
+        <image class="btn-icon" src="/images/icon-read.png"></image>
+        <text class="btn-text">全部已读</text>
+      </view>
+      <view class="action-btn" bindtap="onClearAll">
+        <image class="btn-icon" src="/images/icon-clear.png"></image>
+        <text class="btn-text">清空消息</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 消息列表 -->
+  <scroll-view class="message-list" scroll-y="true" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onLoadMore">
+    <view wx:if="{{messageList.length === 0 && !isLoading}}" class="empty-state">
+      <image class="empty-icon" src="/images/icon-no-message.png"></image>
+      <text class="empty-text">暂无消息</text>
+      <text class="empty-subtext">当订单状态变更时，您会收到通知</text>
+    </view>
+    
+    <view wx:else class="message-items">
+      <view class="message-item {{item.isRead ? 'read' : 'unread'}}" wx:for="{{messageList}}" wx:key="messageId" data-message="{{item}}" bindtap="onMessageClick">
+        <view class="message-header">
+          <view class="message-type">
+            <image class="type-icon" src="{{item.typeIcon}}"></image>
+            <text class="type-text">{{item.typeText}}</text>
+          </view>
+          <text class="message-time">{{item.timeText}}</text>
+        </view>
+        
+        <view class="message-content">
+          <view class="content-title">{{item.title}}</view>
+          <view class="content-desc">{{item.description}}</view>
+          
+          <view wx:if="{{item.data}}" class="content-data">
+            <view class="data-item" wx:for="{{item.data}}" wx:key="key" wx:for-item="dataItem">
+              <text class="data-key">{{dataItem.key}}：</text>
+              <text class="data-value">{{dataItem.value}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <view class="message-footer">
+          <text class="footer-text">{{item.footer}}</text>
+          <view wx:if="{{!item.isRead}}" class="unread-dot"></view>
+        </view>
+      </view>
+      
+      <view wx:if="{{isLoadingMore}}" class="loading-more">
+        <view class="loading-spinner"></view>
+        <text class="loading-text">加载中...</text>
+      </view>
+    </view>
+  </scroll-view>
+</view>
+
+<!-- 消息详情弹窗 -->
+<view class="message-modal" wx:if="{{showMessageDetail}}" catchtouchmove="true">
+  <view class="modal-overlay" bindtap="onCloseModal"></view>
+  <view class="modal-content">
+    <view class="modal-header">
+      <text class="modal-title">{{selectedMessage ? selectedMessage.title : ''}}</text>
+      <image class="close-btn" src="/images/icon-close.png" bindtap="onCloseModal"></image>
+    </view>
+    
+    <scroll-view class="modal-body" scroll-y="true">
+      <view class="message-detail">
+        <view class="detail-type">
+          <image class="type-icon" src="{{selectedMessage ? selectedMessage.typeIcon : '/images/icon-default.png'}}"></image>
+          <text class="type-text">{{selectedMessage ? selectedMessage.typeText : ''}}</text>
+        </view>
+        
+        <view class="detail-time">{{selectedMessage ? selectedMessage.timeText : ''}}</view>
+        
+        <view class="detail-content">
+          <text class="content-text">{{selectedMessage ? selectedMessage.description : ''}}</text>
+          
+          <view wx:if="{{selectedMessage && selectedMessage.data}}" class="detail-data">
+            <view class="data-section" wx:for="{{selectedMessage.data}}" wx:key="key" wx:for-item="dataItem">
+              <text class="data-key">{{dataItem.key}}：</text>
+              <text class="data-value">{{dataItem.value}}</text>
+            </view>
+          </view>
+        </view>
+        
+        <view wx:if="{{selectedMessage && selectedMessage.action}}" class="detail-action">
+          <button class="action-btn-primary" bindtap="onMessageAction">
+            {{selectedMessage ? selectedMessage.action.text : ''}}
+          </button>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+</view>
+
+<!-- 加载遮罩 -->
+<view class="loading-overlay" wx:if="{{isLoading && !isRefreshing}}">
+  <view class="loading-content">
+    <view class="loading-spinner"></view>
+    <text class="loading-text">{{loadingText}}</text>
+  </view>
+</view>

@@ -1,0 +1,50 @@
+<view class="container">
+  <view class="search-section">
+    <view class="search-bar">
+      <input class="search-input" placeholder="输入订单号/客户名" value="{{searchKeyword}}" bindinput="onSearchInput" bindconfirm="onSearch" confirm-type="search" />
+      <view class="search-btn" bindtap="onSearch"><text>搜索</text></view>
+    </view>
+
+    <scroll-view class="status-filter" scroll-x="true">
+      <view class="filter-item {{currentStatus === 'all' ? 'active' : ''}}" data-status="all" bindtap="onStatusFilter"><text>全部</text></view>
+      <view class="filter-item {{currentStatus === 'pending' ? 'active' : ''}}" data-status="pending" bindtap="onStatusFilter"><text>待生产</text></view>
+      <view class="filter-item {{currentStatus === 'producing' ? 'active' : ''}}" data-status="producing" bindtap="onStatusFilter"><text>生产中</text></view>
+      <view class="filter-item {{currentStatus === 'shipped' ? 'active' : ''}}" data-status="shipped" bindtap="onStatusFilter"><text>已发货</text></view>
+      <view class="filter-item {{currentStatus === 'completed' ? 'active' : ''}}" data-status="completed" bindtap="onStatusFilter"><text>已完成</text></view>
+    </scroll-view>
+  </view>
+
+  <scroll-view class="order-list" scroll-y="true" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onLoadMore">
+    <view wx:if="{{orderList.length === 0 && !isLoading}}" class="empty-state">
+      <text class="empty-text">暂无订单数据</text>
+      <text class="empty-subtext">尝试搜索或下拉刷新</text>
+    </view>
+
+    <view wx:else class="order-items">
+      <view class="order-item" wx:for="{{orderList}}" wx:key="orderId" data-order="{{item}}" bindtap="onOrderClick">
+        <view class="order-header">
+          <text class="order-no">订单号：{{item.orderNo}}</text>
+          <text class="order-status">{{item.statusText}}</text>
+        </view>
+        <view class="order-info">
+          <text>客户：{{item.customerName}}</text>
+          <text>下单：{{item.orderDate}}</text>
+        </view>
+        <view class="order-progress">
+          <view class="progress-bar"><view class="progress-fill" style="width: {{item.progress}}%"></view></view>
+          <text class="progress-text">{{item.progress}}%</text>
+        </view>
+      </view>
+      <view wx:if="{{isLoadingMore}}" class="loading-more"><text>加载中...</text></view>
+    </view>
+  </scroll-view>
+
+  <view class="quick-actions">
+    <button class="action-btn" bindtap="onRefresh">刷新</button>
+  </view>
+</view>
+
+<view class="loading-overlay" wx:if="{{isLoading && !isRefreshing}}">
+  <view class="loading-content"><text class="loading-text">{{loadingText}}</text></view>
+</view>
+
