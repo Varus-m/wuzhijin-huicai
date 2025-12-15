@@ -216,19 +216,19 @@ def search_orders():
         user_id = getattr(request, 'user_id', None)
         keyword = request.args.get('keyword', '')
         status = request.args.get('status', '')
-        page = int(request.args.get('page', 1))
-        page_size = int(request.args.get('pageSize', 20))
+        
+        # 默认查询全部（如果不传分页参数）
+        page_param = request.args.get('page')
+        page_size_param = request.args.get('pageSize')
+        
+        page = int(page_param) if page_param else 1
+        page_size = int(page_size_param) if page_size_param else 10000
         
         if not user_id:
             return jsonify(create_response(False, "认证信息缺失")), 401
         
-        # 验证用户
-        user = get_user_by_id(user_id)
-        if not user:
-            return jsonify(create_response(False, "用户不存在")), 200
-        
-        # 检查企业绑定
-        binding = UserCompany.query.filter_by(user_id=user.id, is_valid=True).first()
+        # 获取绑定信息 (由 verify_invite_code 注入)
+        binding = getattr(request, 'user_binding', None)
         if not binding or not binding.customer_id:
             return jsonify(create_response(False, "用户未绑定企业")), 200
         
@@ -244,7 +244,7 @@ def search_orders():
         
         # 记录API调用
         log_api_call(
-            user_id=user.id,
+            user_id=user_id,
             endpoint='/api/orders/search',
             method='GET',
             status_code=200,
@@ -461,138 +461,4 @@ def get_user_profile():
         logger.error(f"获取用户信息失败: {str(e)}")
         return jsonify(create_response(False, f"查询失败: {str(e)}")), 500
 
-# 系统监控相关API
-@api_bp.route('/health/check', methods=['GET'])
-def health_check():
-    """系统健康检查"""
-    try:
-        # 检查数据库连接
-        db.session.execute('SELECT 1')
-        
-        # 检查ERP连接
-        erp_client = get_erp_client()
-        erp_status = erp_client.check_health()
-        
-        # 检查微信连接
-        wechat_client = get_wechat_client()
-        # 这里可以添加微信接口健康检查
-        
-        return jsonify(create_response(True, "系统健康", {
-            "status": "healthy",
-            "timestamp": get_current_timestamp(),
-            "services": {
-                "database": "healthy",
-                "erp": "healthy" if erp_status.get("status") == "ok" else "unhealthy",
-                "wechat": "healthy"
-            }
-        }))
-        
-    except Exception as e:
-        logger.error(f"健康检查失败: {str(e)}")
-        return jsonify(create_response(False, "系统异常", {
-            "status": "unhealthy",
-            "error": str(e)
-        })), 500
 
-@api_bp.route('/erp/status', methods=['GET'])
-def erp_status():
-    """ERP接口状态监控"""
-    try:
-        # 获取最近1小时的API调用统计
-        one_hour_ago = datetime.utcnow() - timedelta(hours=1)
-        
-        api_stats = db.session.query(
-            ApiCallLog.api_endpoint,
-            db.func.count(ApiCallLog.log_id).label('total_calls'),
-            db.func.avg(ApiCallLog.response_time_ms).label('avg_response_time'),
-            db.func.sum(db.case((ApiCallLog.response_status >= 400, 1), else_=0)).label('error_calls')
-        ).filter(
-            ApiCallLog.called_at >= one_hour_ago
-        ).group_by(
-            ApiCallLog.api_endpoint
-        ).all()
-        
-        # 计算成功率
-        stats = []
-        for stat in api_stats:
-            error_rate = (stat.error_calls / stat.total_calls * 100) if stat.total_calls > 0 else 0
-            stats.append({
-                "endpoint": stat.api_endpoint,
-                "totalCalls": stat.total_calls,
-                "avgResponseTime": round(float(stat.avg_response_time or 0), 2),
-                "errorRate": round(error_rate, 2),
-                "successRate": round(100 - error_rate, 2)
-            })
-        
-        return jsonify(create_response(True, "查询成功", {
-            "stats": stats,
-            "checkTime": get_current_timestamp()
-        }))
-        
-    except Exception as e:
-        logger.error(f"获取ERP状态失败: {str(e)}")
-        return jsonify(create_response(False, f"查询失败: {str(e)}")), 500
-
-@api_bp.route('/metrics/performance', methods=['GET'])
-def performance_metrics():
-    """接口性能指标"""
-    try:
-        # 获取最近24小时的性能数据
-        one_day_ago = datetime.utcnow() - timedelta(days=1)
-        
-        # 按小时统计
-        hourly_stats = db.session.query(
-            db.func.date_format(ApiCallLog.called_at, '%Y-%m-%d %H:00:00').label('hour'),
-            db.func.count(ApiCallLog.log_id).label('total_calls'),
-            db.func.avg(ApiCallLog.response_time_ms).label('avg_response_time'),
-            db.func.max(ApiCallLog.response_time_ms).label('max_response_time'),
-            db.func.sum(db.case((ApiCallLog.response_status >= 400, 1), else_=0)).label('error_calls')
-        ).filter(
-            ApiCallLog.called_at >= one_day_ago
-        ).group_by(
-            db.func.date_format(ApiCallLog.called_at, '%Y-%m-%d %H:00:00')
-        ).order_by(
-            db.func.date_format(ApiCallLog.called_at, '%Y-%m-%d %H:00:00')
-        ).all()
-        
-        # 按接口统计
-        endpoint_stats = db.session.query(
-            ApiCallLog.api_endpoint,
-            db.func.count(ApiCallLog.log_id).label('total_calls'),
-            db.func.avg(ApiCallLog.response_time_ms).label('avg_response_time'),
-            db.func.max(ApiCallLog.response_time_ms).label('max_response_time'),
-            db.func.sum(db.case((ApiCallLog.response_status >= 400, 1), else_=0)).label('error_calls')
-        ).filter(
-            ApiCallLog.called_at >= one_day_ago
-        ).group_by(
-            ApiCallLog.api_endpoint
-        ).all()
-        
-        return jsonify(create_response(True, "查询成功", {
-            "hourlyStats": [
-                {
-                    "hour": stat.hour,
-                    "totalCalls": stat.total_calls,
-                    "avgResponseTime": round(float(stat.avg_response_time or 0), 2),
-                    "maxResponseTime": stat.max_response_time or 0,
-                    "errorCalls": stat.error_calls,
-                    "errorRate": round((stat.error_calls / stat.total_calls * 100) if stat.total_calls > 0 else 0, 2)
-                }
-                for stat in hourly_stats
-            ],
-            "endpointStats": [
-                {
-                    "endpoint": stat.api_endpoint,
-                    "totalCalls": stat.total_calls,
-                    "avgResponseTime": round(float(stat.avg_response_time or 0), 2),
-                    "maxResponseTime": stat.max_response_time or 0,
-                    "errorCalls": stat.error_calls,
-                    "errorRate": round((stat.error_calls / stat.total_calls * 100) if stat.total_calls > 0 else 0, 2)
-                }
-                for stat in endpoint_stats
-            ]
-        }))
-        
-    except Exception as e:
-        logger.error(f"获取性能指标失败: {str(e)}")
-        return jsonify(create_response(False, f"查询失败: {str(e)}")), 500

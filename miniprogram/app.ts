@@ -19,7 +19,7 @@ App<IAppOption>({
     userInfo: undefined,
     openid: undefined,
     sessionKey: undefined,
-    apiBaseUrl: 'http://192.168.50.5:5000', // 需要替换为实际的API域名
+    apiBaseUrl: 'http://localhost:5000', // 需要替换为实际的API域名
     erpStatus: {
       isConnected: true,
       lastCheckTime: '',
@@ -28,7 +28,7 @@ App<IAppOption>({
   },
 
   onLaunch() {
-    console.log('零材料货物追踪小程序启动')
+    console.log('惠采订单信息查询平台小程序启动')
     
     // 检查更新
     this.checkForUpdate()
@@ -36,13 +36,15 @@ App<IAppOption>({
     // 初始化用户会话
     this.initUserSession()
     
-    // 检查ERP接口状态
-    this.checkErpStatus()
+    // 检查ERP接口状态 (已废弃)
+    // this.checkErpStatus()
     
-    // 设置定时检查ERP状态
+    // 设置定时检查ERP状态 (已废弃)
+    /*
     setInterval(() => {
       this.checkErpStatus()
-    }, 30000) // 每30秒检查一次
+    }, 30000) 
+    */
   },
 
   // 检查小程序更新
@@ -120,8 +122,11 @@ App<IAppOption>({
       }
   },
 
-  // 检查ERP接口状态
+  // 检查ERP接口状态 (已废弃，保留空函数以防其他地方调用)
   async checkErpStatus() {
+    // 接口已移除，不再执行检查
+    return;
+    /*
     try {
       const res = await wx.request({
         url: `${this.globalData.apiBaseUrl}/api/health/check`,
@@ -144,6 +149,7 @@ App<IAppOption>({
         responseTime: 0
       }
     }
+    */
   },
 
   // 全局错误处理

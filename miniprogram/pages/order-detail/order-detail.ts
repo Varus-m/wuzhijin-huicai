@@ -7,6 +7,22 @@ interface MaterialItem {
   statusText: string
 }
 
+interface DeliveryProduct {
+  productName: string;
+  spec: string;
+  quantity: number;
+}
+
+interface DeliveryOrder {
+  deliveryDate: string;
+  logisticsCompany: string;
+  logisticsCode: string;
+  address: string;
+  remark: string;
+  attachments: string[];
+  products: DeliveryProduct[];
+}
+
 Page({
   data: {
     orderId: '',
@@ -16,6 +32,7 @@ Page({
     statusText: '',
     progress: 0,
     materials: [] as MaterialItem[],
+    deliveryOrders: [] as DeliveryOrder[],
     isLoading: false
   },
 
@@ -32,31 +49,48 @@ Page({
   async loadDetail() {
     this.setData({ isLoading: true })
     try {
-      const [detail, materialsRes] = await Promise.all([
-        orderAPI.getOrderDetail(this.data.orderId),
-        orderAPI.getOrderMaterials(this.data.orderId)
-      ])
-      if (!detail.success || !materialsRes.success) {
-        if ((detail as any).code === 'NEED_INVITE_BIND' || (materialsRes as any).code === 'NEED_INVITE_BIND') {
+      // 现在的 getOrderDetail 已经包含了 materials 和 delivery_orders
+      const detail = await orderAPI.getOrderDetail(this.data.orderId)
+      
+      if (!detail.success) {
+        if ((detail as any).code === 'NEED_INVITE_BIND') {
           showToast('请先绑定企业')
           wx.switchTab({ url: '/pages/index/index' })
           return
         }
-        throw new Error(detail.message || materialsRes.message || '加载订单详情失败')
+        throw new Error(detail.message || '加载订单详情失败')
       }
       const d = detail.data
+      
+      // 格式化发运单数据
+      const deliveryOrders = (d.delivery_orders || []).map((doItem: any) => ({
+        deliveryDate: this.formatDate(doItem.delivery_date),
+        logisticsCompany: doItem.logistics_company || '-',
+        logisticsCode: doItem.logistics_code || '-',
+        address: doItem.address || '-',
+        remark: doItem.remark || '',
+        attachments: doItem.attachments || [],
+        products: doItem.products || []
+      }))
+
       this.setData({
         orderNo: d.order_no,
-        customerName: d.customer_name,
-        orderDate: this.formatDate(d.order_date),
+        customerName: d.customer_name, // 注意：后端返回可能没有这个字段，需确认
+        orderDate: this.formatDate(d.created_at || d.order_date),
         statusText: this.getOrderStatusText(d.status),
-        progress: this.calculateProgress((materialsRes && materialsRes.data && materialsRes.data.materials) ? materialsRes.data.materials : [])
+        // 如果后端返回了 materials，则使用后端返回的计算进度，否则默认为0
+        progress: this.calculateProgress(d.materials || []),
+        deliveryOrders: deliveryOrders
       })
 
-      const materialsSource = (materialsRes && materialsRes.data && materialsRes.data.materials) ? materialsRes.data.materials : []
+      const materialsSource = d.materials || []
       const materials = materialsSource.map((m: any) => ({
         materialId: m.material_id,
         code: m.material_code,
+        name: m.material_name, // 新增
+        quantity: m.quantity, // 新增
+        producedQuantity: m.produced_quantity, // 新增
+        shippedQuantity: m.shipped_quantity, // 新增
         statusText: this.getMaterialStatusText(m.status)
       }))
       this.setData({ materials })
@@ -68,15 +102,27 @@ Page({
     }
   },
 
-  getOrderStatusText(status: string): string {
+  // 预览图片
+  onPreviewImage(e: any) {
+    const url = e.currentTarget.dataset.url;
+    const urls = e.currentTarget.dataset.urls;
+    wx.previewImage({
+      current: url,
+      urls: urls
+    });
+  },
+
+  getOrderStatusText(status: string | number): string {
     const map: { [key: string]: string } = {
-      pending: '待生产',
-      producing: '生产中',
-      shipped: '已发货',
-      completed: '已完成',
-      cancelled: '已取消'
+      '2': '已下单',
+      '4': '已完成',
+      'pending': '待生产',
+      'producing': '生产中',
+      'shipped': '已发货',
+      'completed': '已完成',
+      'cancelled': '已取消'
     }
-    return map[status] || '待生产'
+    return map[String(status)] || '待生产'
   },
 
   getMaterialStatusText(status: string): string {

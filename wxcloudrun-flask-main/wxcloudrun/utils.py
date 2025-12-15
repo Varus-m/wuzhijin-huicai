@@ -76,18 +76,29 @@ def verify_invite_code(f):
         user_id = getattr(request, 'user_id', None)
         if not user_id:
             return jsonify(create_response(False, "认证信息缺失")), 401
+        
+        # 初始化 binding
+        request.user_binding = None
+        
         user = User.query.filter_by(id=user_id, is_active=True).first()
         if not user:
             return jsonify(create_response(False, "用户不存在")), 200
-        # 管理员豁免
-        if is_admin_user(user_id):
-            return f(*args, **kwargs)
+            
         # 检查绑定
         binding = UserCompany.query.filter_by(user_id=user.id, is_valid=True).first()
+        
+        # 管理员豁免校验，但如果有绑定信息还是会带上
+        if is_admin_user(user_id):
+            if binding:
+                request.user_binding = binding
+            return f(*args, **kwargs)
+            
         if not binding or not binding.invite_code or not binding.customer_id:
             resp = create_response(False, "未绑定企业")
             resp["code"] = "NEED_INVITE_BIND"
             return jsonify(resp), 200
+            
+        request.user_binding = binding
         return f(*args, **kwargs)
     return decorated
 

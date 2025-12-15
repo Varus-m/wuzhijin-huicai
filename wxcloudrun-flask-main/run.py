@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-零材料批发货物追踪系统 - Flask应用入口
+惠采订单信息查询系统 - Flask应用入口
 """
 
 import os

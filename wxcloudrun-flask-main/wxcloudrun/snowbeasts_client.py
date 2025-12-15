@@ -194,6 +194,8 @@ class SnowbeastsAPI:
             columns = [] # Default columns skipped for brevity
         
         if filters is None:
+            # filters = {"status": [1, 2, 4, 5]}
+            # 用户要求取消默认的状态过滤，查询所有状态
             filters = {}
         
         payload = {
@@ -271,4 +273,231 @@ class SnowbeastsAPI:
              
         return {"success": False, "error": result.get("error", "查询失败")}
 
-    # ... Other methods like get_sales_order_lines can be added if needed ...
+    def get_sales_delivery_orders(self, 
+                                 sales_order_product_ids: list = None,
+                                 page: int = 0,
+                                 page_size: int = 20,
+                                 orderby: str = "",
+                                 filters: Dict[str, Any] = None,
+                                 condition: Dict[str, Any] = None) -> Dict[str, Any]:
+        """
+        获取销售出库单数据（自动登录）
+        
+        Args:
+            sales_order_product_ids: 销售订单产品ID列表，为None时查询所有
+            page: 页码，默认为 0
+            page_size: 每页大小，默认为 20
+            orderby: 排序字段
+            filters: 过滤条件
+            condition: 查询条件
+        
+        Returns:
+            销售出库单数据
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        # 销售出库单的字段列表
+        columns = [
+            "finished", "code", "orderCodes", "date", "category", "customerOrSupplierId", 
+            "projectIds", "salesOrderId", "currency", "exchangeRate", "salesOrderIds", 
+            "customerOrderCodes", "collectionDate", "produceOrderId", "salesOrderCode", 
+            "contact", "tel", "mobile", "address", "companyId", "userId", "ownerId", 
+            "departmentId", "amount", "deductionAmount", "grossProfit", "rmbAmount", 
+            "receivedAmount", "receivingAmount", "receivableAmount", "returnedAmount", 
+            "returningAmount", "invoicedAmount", "invoicingAmount", "unInvoicedAmount", 
+            "warehouseId", "reconciliation", "reconciliationStatus", "qualityInspectionStatus", 
+            "qualityInspection", "detectionQuantity", "remark","发货日期","logisticsCode","attachments","已出库","是否发货"
+        ]
+        
+        # 构建查询条件
+        final_condition = {}
+        if condition:
+            final_condition.update(condition)
+        
+        if sales_order_product_ids:
+            final_condition["salesOrderProductIds"] = sales_order_product_ids
+        
+        result = self.get_sales_order_page_list(
+            form_id=100039,  # 销售出库单的formId
+            condition=final_condition,
+            columns=columns,
+            page=page,
+            page_size=page_size,
+            filters=filters or {},
+            orderby=orderby
+        )
+        
+        return result
+
+    def get_logistics_companies(self, 
+                               app_name: str = "SnowInventory-82886",
+                               page: int = 0,
+                               page_size: int = 1000) -> Dict[str, Any]:
+        """
+        获取物流公司列表（自动登录）
+        
+        Args:
+            app_name: 应用名称，默认为 "SnowInventory-82886"
+            page: 页码，默认为 0
+            page_size: 每页大小，默认为 1000
+        
+        Returns:
+            物流公司列表数据
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        payload = {
+            "columns": ["name"],
+            "condition": {},
+            "page": page,
+            "pageSize": page_size,
+            "appName": app_name,
+            "datasourceId": 100292,
+            "isNonfilter": True,
+            "formId": 100039,
+            "filters": {},
+            "orderby": "",
+            "colId": 110673
+        }
+        
+        request_headers = {
+            'Content-Type': 'application/json',
+            'Cookie': f'JSESSIONID={self.app_jsessionid}; sid={self.sid}'
+        }
+        
+        url = "http://saas.snowbeasts.com/business/getDatasource"
+        
+        try:
+            response = self.session.post(
+                url,
+                json=payload,
+                headers=request_headers
+            )
+            
+            response.raise_for_status()
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"查询物流公司请求失败: {e}")
+            return {"error": str(e)}
+        except json.JSONDecodeError as e:
+            print(f"响应解析失败: {e}")
+            return {"error": "响应格式错误"}
+
+    def get_delivery_order_detail(self, delivery_order_id: str, app_name: str = "SnowInventory-82886") -> Dict[str, Any]:
+        """
+        获取出库单详情（自动登录）
+
+        Args:
+            delivery_order_id: 出库单ID
+            app_name: 应用名称，默认为 "SnowInventory-82886"
+
+        Returns:
+            出库单详情数据
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+
+        payload = {
+            "appName": app_name,
+            "formId": 100039,  # 出库单的formId
+            "condition": {"salesOrderProductIds": None},
+            "id": delivery_order_id
+        }
+
+        request_headers = {
+            'Content-Type': 'application/json',
+            'Cookie': f'JSESSIONID={self.app_jsessionid}; sid={self.sid}'
+        }
+
+        url = "http://saas.snowbeasts.com/business/getBusiness"
+
+        try:
+            response = self.session.post(
+                url,
+                json=payload,
+                headers=request_headers
+            )
+
+            response.raise_for_status()
+            return response.json()
+
+        except requests.exceptions.RequestException as e:
+            print(f"获取出库单详情请求失败: {e}")
+            return {"error": str(e)}
+        except json.JSONDecodeError as e:
+            print(f"响应解析失败: {e}")
+            return {"error": "响应格式错误"}
+
+    def get_delivery_order_products(self, delivery_order_id: str, sales_order_ids: list = None, 
+                                   customer_or_supplier_id: str = "", sales_order_id: str = "",
+                                   app_name: str = "SnowInventory-82886") -> Dict[str, Any]:
+        """
+        获取出库单关联的产品信息（自动登录）
+        
+        Args:
+            delivery_order_id: 出库单ID（作为parent.id）
+            sales_order_ids: 销售订单ID列表，默认为None
+            customer_or_supplier_id: 客户或供应商ID，默认为空
+            sales_order_id: 销售订单ID，默认为空
+            app_name: 应用名称，默认为 "SnowInventory-82886"
+        
+        Returns:
+            出库单产品信息数据
+        """
+        # 确保已登录
+        if not self._ensure_login():
+            return {"error": "登录失败，无法执行查询"}
+        
+        # 构建查询条件
+        condition = {
+            "parent.id": delivery_order_id,
+            "exchangeRate": 1,
+            "category": 1,
+            "salesOrderId": sales_order_id
+        }
+        
+        # 添加可选参数
+        if sales_order_ids:
+            condition["salesOrderIds"] = sales_order_ids
+        if customer_or_supplier_id:
+            condition["customerOrSupplierId"] = customer_or_supplier_id
+        
+        payload = {
+            "appName": app_name,
+            "formId": 100041,  # 出库单产品的formId
+            "condition": condition,
+            "page": 0,
+            "pageSize": 5000,
+            "orderby": "",
+            "isColumnForm": True
+        }
+        
+        request_headers = {
+            'Content-Type': 'application/json',
+            'Cookie': f'JSESSIONID={self.app_jsessionid}; sid={self.sid}'
+        }
+        
+        url = "http://saas.snowbeasts.com/business/getBusinessPageList"
+        
+        try:
+            response = self.session.post(
+                url,
+                json=payload,
+                headers=request_headers
+            )
+            
+            response.raise_for_status()
+            return response.json()
+            
+        except requests.exceptions.RequestException as e:
+            print(f"获取出库单产品信息请求失败: {e}")
+            return {"error": str(e)}
+        except json.JSONDecodeError as e:
+            print(f"响应解析失败: {e}")
+            return {"error": "响应格式错误"}

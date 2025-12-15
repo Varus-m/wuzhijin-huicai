@@ -8,6 +8,11 @@ interface OrderItem {
   orderDate: string;
   status: string;
   statusText: string;
+  rmbAmount: string;
+  deliveryDate: string;
+  deliveryStatus: number;
+  deliveryStatusText: string;
+  remark: string;
   materialCount: number;
   materials: MaterialItem[];
   progress: number;
@@ -20,17 +25,27 @@ interface MaterialItem {
   statusText: string;
 }
 
+interface OrderGroup {
+  id: string;
+  title: string;
+  count: number;
+  isExpanded: boolean;
+  orders: OrderItem[];
+}
+
 Page({
   data: {
     searchKeyword: '',
     currentStatus: 'all',
     orderList: [] as OrderItem[],
+    orderGroups: [] as OrderGroup[],
+    activeGroupId: 'shipped', // 当前激活的左侧菜单项
     isLoading: false,
     isLoadingMore: false,
     isRefreshing: false,
     loadingText: '',
     currentPage: 1,
-    pageSize: 10,
+    // pageSize: 10, // 默认不分页（查询全部）
     hasMore: true,
     showBindCompany: false,
     inviteCode: ''
@@ -138,7 +153,17 @@ Page({
     this.loadOrders();
   },
 
-  // 下拉刷新
+  // 页面下拉刷新
+  onPullDownRefresh() {
+    this.onRefresh();
+  },
+
+  // 页面上拉触底
+  onReachBottom() {
+    this.onLoadMore();
+  },
+
+  // 刷新逻辑
   onRefresh() {
     this.setData({
       isRefreshing: true,
@@ -149,7 +174,7 @@ Page({
     this.loadOrders();
   },
 
-  // 加载更多
+  // 加载更多逻辑
   onLoadMore() {
     if (this.data.isLoadingMore || !this.data.hasMore) return;
     
@@ -202,18 +227,27 @@ Page({
       const result = await orderAPI.searchOrders({
         keyword: this.data.searchKeyword,
         status: this.data.currentStatus === 'all' ? undefined : this.data.currentStatus,
-        page: this.data.currentPage,
-        pageSize: this.data.pageSize
+        page: this.data.currentPage
+        // pageSize: 10
       });
       
+      // 停止下拉刷新动画
+      if (this.data.isRefreshing) {
+        wx.stopPullDownRefresh();
+      }
+
       if (result.success) {
         const orders = this.formatOrders(result.data.orders);
         const newOrderList = isLoadMore 
           ? [...this.data.orderList, ...orders]
           : orders;
         
+        // 分组处理
+        const groups = this.groupOrders(newOrderList);
+
         this.setData({
           orderList: newOrderList,
+          orderGroups: groups,
           hasMore: result.data.hasMore,
           isLoading: false,
           isLoadingMore: false,
@@ -237,6 +271,11 @@ Page({
       }
     } catch (error: any) {
       console.error('Load orders failed:', error);
+      
+      if (this.data.isRefreshing) {
+        wx.stopPullDownRefresh();
+      }
+
       this.setData({
         isLoading: false,
         isLoadingMore: false,
@@ -250,15 +289,101 @@ Page({
     }
   },
 
+  // 对订单进行分组
+  groupOrders(orders: OrderItem[]): OrderGroup[] {
+    const groups: OrderGroup[] = [
+      { id: 'shipped', title: '已发货', count: 0, isExpanded: true, orders: [] },
+      { id: 'partial', title: '部分发货', count: 0, isExpanded: true, orders: [] },
+      { id: 'unshipped', title: '未发货', count: 0, isExpanded: true, orders: [] },
+      { id: 'completed', title: '已完成', count: 0, isExpanded: false, orders: [] }
+    ];
+
+    orders.forEach(order => {
+      // 判断归属组
+      // 优先级：已完成 > 已发货 > 部分发货 > 未发货
+      // 注意：deliveryStatus: 0:未发货, 1:已发货, 2:部分发货
+      
+      let groupId = 'unshipped';
+      
+      // 如果状态是已完成 (status: 4 或 completed)，则归为已完成
+      if (order.status === '4' || order.statusText === '已完成' || order.status === 'completed') {
+        groupId = 'completed';
+      } else {
+        // 根据发货状态分类
+        switch (order.deliveryStatus) {
+          case 1:
+            groupId = 'shipped';
+            break;
+          case 2:
+            groupId = 'partial';
+            break;
+          case 0:
+          default:
+            groupId = 'unshipped';
+            break;
+        }
+      }
+
+      const group = groups.find(g => g.id === groupId);
+      if (group) {
+        group.orders.push(order);
+      }
+    });
+
+    // 更新计数
+    groups.forEach(g => g.count = g.orders.length);
+
+    return groups;
+  },
+
+  // 切换分组展开/折叠
+  toggleGroup(e: any) {
+    const id = e.currentTarget.dataset.id;
+    const groups = this.data.orderGroups.map(g => {
+      if (g.id === id) {
+        return { ...g, isExpanded: !g.isExpanded };
+      }
+      return g;
+    });
+    this.setData({ orderGroups: groups });
+  },
+
+  // 切换侧边栏菜单
+  onMenuClick(e: any) {
+    const id = e.currentTarget.dataset.id;
+    this.setData({ activeGroupId: id });
+    
+    // 滚动到对应位置
+    // 确保目标分组展开
+    const groups = this.data.orderGroups.map(g => {
+      if (g.id === id) {
+        return { ...g, isExpanded: true };
+      }
+      return g;
+    });
+    this.setData({ orderGroups: groups });
+
+    // 先清空再设置，确保触发滚动（某些情况下 id 没变可能不触发，虽然这里 id 变了）
+    this.setData({ scrollIntoViewId: '' }, () => {
+       this.setData({ scrollIntoViewId: `group-${id}` });
+    });
+  },
+
   // 格式化订单数据
   formatOrders(orders: any[]): OrderItem[] {
     return orders.map(order => ({
       orderId: order.order_id,
       orderNo: order.order_no,
       customerName: order.customer_name,
-      orderDate: this.formatDate(order.order_date),
+      orderDate: this.formatDate(order.order_date, false), // 下单日期只显示日期
       status: this.getOrderStatus(order.status),
       statusText: this.getOrderStatusText(order.status),
+      rmbAmount: order.rmb_amount ? `¥${Number(order.rmb_amount).toFixed(2)}` : '¥0.00',
+      deliveryDate: order.delivery_date ? this.formatDate(order.delivery_date, true) : '-', // 交货日期显示相对时间
+      shippedRate: order.shipped_rate ? Math.round(order.shipped_rate * 100) : 0,
+      deliveryStatus: order.delivery_status || 0,
+      deliveryStatusText: this.getDeliveryStatusText(order.delivery_status),
+      remark: order.remark || '',
       materialCount: order.material_count || 0,
       materials: this.formatMaterials(order.materials || []),
       progress: this.calculateProgress(order.materials || [])
@@ -275,28 +400,42 @@ Page({
     }));
   },
 
+  // 获取发货状态文本
+  getDeliveryStatusText(status: number): string {
+    const statusMap: { [key: number]: string } = {
+      0: '未发货',
+      1: '已发货',
+      2: '部分发货'
+    };
+    return statusMap[status] || '未发货';
+  },
+
   // 获取订单状态
-  getOrderStatus(status: string): string {
+  getOrderStatus(status: string | number): string {
     const statusMap: { [key: string]: string } = {
+      '2': 'producing', // 暂时映射为 producing 样式
+      '4': 'completed',
       'pending': 'pending',
       'producing': 'producing',
       'shipped': 'shipped',
       'completed': 'completed',
       'cancelled': 'cancelled'
     };
-    return statusMap[status] || 'pending';
+    return statusMap[String(status)] || 'pending';
   },
 
   // 获取订单状态文本
-  getOrderStatusText(status: string): string {
+  getOrderStatusText(status: string | number): string {
     const statusTextMap: { [key: string]: string } = {
+      '2': '已下单',
+      '4': '已完成',
       'pending': '待生产',
       'producing': '生产中',
       'shipped': '已发货',
       'completed': '已完成',
       'cancelled': '已取消'
     };
-    return statusTextMap[status] || '待生产';
+    return statusTextMap[String(status)] || '待生产';
   },
 
   // 获取物料状态
@@ -330,25 +469,40 @@ Page({
   },
 
   // 格式化日期 
-  formatDate(dateString: string): string { 
+  formatDate(dateString: string, showRelative: boolean = false): string { 
+    if (!dateString) return '-';
+    
     const date = new Date(dateString); 
     const now = new Date(); 
     
+    // 基础日期格式: 12月16日
+    const basicDate = `${date.getMonth() + 1}月${date.getDate()}日`;
+    
+    // 如果不需要相对时间，直接返回日期
+    if (!showRelative) {
+      return basicDate;
+    }
+
     // 清除时分秒，只比较日期
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const targetDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     
-    const diffTime = today.getTime() - targetDate.getTime();
+    // 计算天数差：目标日期 - 今天
+    const diffTime = targetDate.getTime() - today.getTime();
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
     
+    // 只处理今天和未来的日期
     if (diffDays === 0) { 
-      return '今天'; 
+      return `${basicDate} (今天)`; 
     } else if (diffDays === 1) { 
-      return '昨天'; 
-    } else if (diffDays > 1 && diffDays <= 7) { 
-      return `${diffDays}天前`; 
+      return `${basicDate} (明天)`; 
+    } else if (diffDays === 2) {
+      return `${basicDate} (后天)`;
+    } else if (diffDays > 2) { 
+      return `${basicDate} (${diffDays}天后)`; 
     } else { 
-      return `${date.getMonth() + 1}月${date.getDate()}日`; 
+      // 过去的日期只显示日期
+      return basicDate; 
     } 
   }
 });

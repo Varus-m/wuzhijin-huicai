@@ -1,7 +1,7 @@
 click==8.0.3
 Flask==2.0.2
 Flask-SQLAlchemy==2.5.1
-greenlet==1.1.2
+greenlet
 itsdangerous==2.0.1
 Jinja2==3.0.3
 MarkupSafe==2.0.1
@@ -16,3 +16,4 @@ celery==5.2.7
 flask-cors==3.0.10
 flask-limiter==2.7.0
 prometheus-client==0.14.1
+tenacity

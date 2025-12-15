@@ -1,7 +1,9 @@
 .container {
   min-height: 100vh;
   background: #f5f7fa;
-  padding-bottom: 40rpx;
+  padding: 24rpx;
+  display: block; /* 覆盖 app.wxss 的 flex */
+  box-sizing: border-box;
 }
 
 /* 用户信息卡片 */
@@ -11,6 +13,8 @@
   background: #ffffff;
   padding: 40rpx 32rpx;
   margin-bottom: 24rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
 }
 
 .user-avatar {
@@ -18,10 +22,12 @@
 }
 
 .avatar-img {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
+  width: 128rpx;
+  height: 128rpx;
+  border-radius: 50%;
   background: #f0f2f5;
+  border: 4rpx solid #ffffff;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
 }
 
 .user-info {
@@ -34,31 +40,33 @@
   font-size: 36rpx;
   font-weight: 600;
   color: #333333;
-  margin-bottom: 8rpx;
+  margin-bottom: 12rpx;
 }
 
 .user-phone {
   font-size: 28rpx;
   color: #666666;
-  margin-bottom: 12rpx;
+  margin-bottom: 16rpx;
 }
 
 .user-bind-status {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
   font-size: 24rpx;
-  padding: 4rpx 12rpx;
-  border-radius: 8rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 24rpx;
   align-self: flex-start;
+  font-weight: 500;
 }
 
 .user-bind-status.bound {
-  background: #d4edda;
-  color: #155724;
+  background: rgba(82, 196, 26, 0.1);
+  color: #52c41a;
 }
 
 .user-bind-status.unbound {
-  background: #f8d7da;
-  color: #721c24;
+  background: rgba(255, 77, 79, 0.1);
+  color: #ff4d4f;
 }
 
 /* 企业信息 */
@@ -66,6 +74,8 @@
   background: #ffffff;
   margin-bottom: 24rpx;
   padding: 32rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
 }
 
 .section-header {
@@ -73,7 +83,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24rpx;
-  padding-bottom: 16rpx;
+  padding-bottom: 20rpx;
   border-bottom: 1rpx solid #f0f2f5;
 }
 
@@ -81,14 +91,33 @@
   font-size: 32rpx;
   font-weight: 600;
   color: #333333;
+  position: relative;
+  padding-left: 20rpx;
+}
+
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 8rpx;
+  height: 32rpx;
+  background: #667eea;
+  border-radius: 4rpx;
 }
 
 .edit-btn {
   display: flex;
   align-items: center;
-  padding: 8rpx 16rpx;
-  background: #f0f2f5;
-  border-radius: 24rpx;
+  padding: 10rpx 20rpx;
+  background: #f5f7fa;
+  border-radius: 28rpx;
+  transition: all 0.3s;
+}
+
+.edit-btn:active {
+  background: #e6e8eb;
 }
 
 .edit-icon {
@@ -105,37 +134,41 @@
 .enterprise-info {
   display: flex;
   flex-direction: column;
-  gap: 16rpx;
+  gap: 20rpx;
 }
 
 .info-item {
   display: flex;
   align-items: flex-start;
+  font-size: 28rpx;
 }
 
 .info-label {
   width: 160rpx;
-  font-size: 28rpx;
-  color: #666666;
+  color: #999999;
 }
 
 .info-value {
   flex: 1;
-  font-size: 28rpx;
   color: #333333;
+  font-weight: 500;
 }
 
 /* 菜单列表 */
 .menu-section {
   background: #ffffff;
   margin-bottom: 40rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
+  overflow: hidden;
 }
 
 .menu-item {
   display: flex;
   align-items: center;
   padding: 32rpx;
-  border-bottom: 1rpx solid #f0f2f5;
+  border-bottom: 1rpx solid #f5f7fa;
+  transition: all 0.3s;
 }
 
 .menu-item:last-child {
@@ -147,8 +180,8 @@
 }
 
 .menu-icon {
-  width: 40rpx;
-  height: 40rpx;
+  width: 44rpx;
+  height: 44rpx;
   margin-right: 24rpx;
   display: flex;
   align-items: center;
@@ -179,39 +212,47 @@
 
 /* 操作按钮 */
 .action-section {
-  padding: 0 32rpx;
   display: flex;
   flex-direction: column;
   gap: 24rpx;
+  padding-bottom: 40rpx;
 }
 
 .action-btn {
   width: 100%;
-  height: 88rpx;
-  border-radius: 44rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 32rpx;
-  font-weight: 500;
+  font-weight: 600;
+  border: none;
+  transition: all 0.3s;
+}
+
+.action-btn::after {
+  border: none;
 }
 
 .action-btn.primary {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
+  box-shadow: 0 8rpx 24rpx rgba(102, 126, 234, 0.3);
 }
 
 .action-btn.secondary {
-  background: #f0f2f5;
-  color: #666666;
+  background: #ffffff;
+  color: #ff4d4f;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.05);
 }
 
 .action-btn:active {
-  opacity: 0.9;
   transform: scale(0.98);
+  opacity: 0.9;
 }
 
-/* 弹窗通用样式 */
+/* 弹窗样式优化 */
 .edit-modal, .settings-modal {
   position: fixed;
   top: 0;
@@ -222,6 +263,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 40rpx; /* 防止贴边 */
+  box-sizing: border-box;
 }
 
 .modal-overlay {
@@ -230,17 +273,31 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
 }
 
 .modal-content {
   position: relative;
-  width: 80%;
+  width: 100%;
   max-width: 600rpx;
   background: #ffffff;
-  border-radius: 24rpx;
-  padding: 40rpx;
+  border-radius: 32rpx;
+  padding: 48rpx;
   z-index: 1001;
+  box-shadow: 0 24rpx 48rpx rgba(0, 0, 0, 0.15);
+  animation: modalShow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes modalShow {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .modal-header {
@@ -257,15 +314,21 @@
 }
 
 .close-btn {
-  width: 40rpx;
-  height: 40rpx;
-  padding: 10rpx;
-  margin: -10rpx;
+  width: 48rpx;
+  height: 48rpx;
+  padding: 8rpx;
+  margin: -8rpx;
+  opacity: 0.5;
+  transition: opacity 0.3s;
 }
 
-/* 编辑表单样式 */
+.close-btn:active {
+  opacity: 1;
+}
+
+/* 表单样式优化 */
 .input-group {
-  margin-bottom: 32rpx;
+  margin-bottom: 40rpx;
 }
 
 .input-label {
@@ -273,82 +336,100 @@
   font-size: 28rpx;
   color: #666666;
   margin-bottom: 16rpx;
+  font-weight: 500;
 }
 
 .input-field {
   width: 100%;
-  height: 88rpx;
-  background: #f8f9fa;
-  border: 2rpx solid #e0e0e0;
+  height: 96rpx;
+  background: #f5f7fa;
+  border: 2rpx solid transparent;
   border-radius: 16rpx;
-  padding: 0 24rpx;
+  padding: 0 32rpx;
   box-sizing: border-box;
   font-size: 30rpx;
   color: #333333;
+  transition: all 0.3s;
 }
 
 .input-field:focus {
   border-color: #667eea;
   background: #ffffff;
+  box-shadow: 0 0 0 4rpx rgba(102, 126, 234, 0.1);
 }
 
-/* 弹窗底部按钮 */
 .modal-footer {
   display: flex;
   gap: 24rpx;
-  margin-top: 40rpx;
+  margin-top: 48rpx;
 }
 
 .btn-cancel, .btn-confirm {
   flex: 1;
-  height: 80rpx;
-  border-radius: 40rpx;
+  height: 88rpx;
+  border-radius: 44rpx;
   font-size: 30rpx;
+  font-weight: 600;
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
 }
 
 .btn-cancel {
-  background: #f0f2f5;
+  background: #f5f7fa;
   color: #666666;
 }
 
 .btn-confirm {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #ffffff;
+  box-shadow: 0 8rpx 20rpx rgba(102, 126, 234, 0.25);
 }
 
-/* 设置列表样式 */
-.settings-body {
-  max-height: 60vh;
+.btn-cancel:active, .btn-confirm:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
-.setting-group {
-  margin-bottom: 32rpx;
-}
-
-.group-title {
-  display: block;
-  font-size: 26rpx;
-  color: #999999;
-  margin-bottom: 16rpx;
-  padding-left: 8rpx;
-}
-
+/* 设置开关样式 */
 .setting-item {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 24rpx 0;
-  border-bottom: 1rpx solid #f0f2f5;
-}
-
-.setting-item:last-child {
-  border-bottom: none;
+  padding: 28rpx 0;
+  border-bottom: 1rpx solid #f5f7fa;
 }
 
 .setting-label {
   font-size: 30rpx;
   color: #333333;
+}
+
+/* 适配暗黑模式 */
+@media (prefers-color-scheme: dark) {
+  .container {
+    background: #121212;
+  }
+
+  .user-card, .enterprise-section, .menu-section, .modal-content {
+    background: #1e1e1e;
+  }
+
+  .user-name, .section-title, .info-value, .menu-text, .modal-title, .setting-label {
+    color: #e0e0e0;
+  }
+
+  .user-phone, .info-label, .edit-text {
+    color: #a0a0a0;
+  }
+
+  .edit-btn, .btn-cancel, .input-field {
+    background: #2c2c2c;
+    color: #e0e0e0;
+  }
+  
+  .input-field {
+    border-color: #333;
+  }
 }

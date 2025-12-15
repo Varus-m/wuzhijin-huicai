@@ -26,7 +26,7 @@ export async function getWechatLoginCode(): Promise<string> {
  * API基础配置
  */
 const API_CONFIG = {
-  baseURL: 'http://192.168.50.5:5000', // 本地开发环境地址
+  baseURL: 'http://localhost:5000', // 本地开发环境地址
   timeout: 10000,
   retryCount: 3,
   retryDelay: 1000
@@ -286,50 +286,7 @@ export const messageAPI = {
   }
 }
 
-/**
- * 系统相关API
- */
-export const systemAPI = {
-  /**
-   * 健康检查
-   */
-  async healthCheck() {
-    return request({
-      url: '/api/health/check',
-      method: 'GET'
-    })
-  },
-  
-  /**
-   * 获取ERP状态
-   */
-  async getErpStatus() {
-    return request({
-      url: '/api/erp/status',
-      method: 'GET'
-    })
-  },
-  
-  /**
-   * 获取微信API状态
-   */
-  async getWechatStatus() {
-    return request({
-      url: '/api/wechat/status',
-      method: 'GET'
-    })
-  },
 
-  /**
-   * 获取性能指标
-   */
-  async getPerformanceMetrics() {
-    return request({
-      url: '/api/metrics/performance',
-      method: 'GET'
-    })
-  }
-}
 
 /**
  * 上传文件

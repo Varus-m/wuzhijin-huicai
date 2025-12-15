@@ -452,7 +452,7 @@ class SnowbeastsAPI:
             "receivedAmount", "receivingAmount", "receivableAmount", "returnedAmount", 
             "returningAmount", "invoicedAmount", "invoicingAmount", "unInvoicedAmount", 
             "warehouseId", "reconciliation", "reconciliationStatus", "qualityInspectionStatus", 
-            "qualityInspection", "detectionQuantity", "remark","发货日期","logisticsCode","attachments"
+            "qualityInspection", "detectionQuantity", "remark","发货日期","logisticsCode","attachments","已出库","是否发货"
         ]
         
         # 构建查询条件
@@ -477,9 +477,9 @@ class SnowbeastsAPI:
             sum_info = data.get("_sum", {})
             data_list = data.get("_dataList", [])
             
-            print(f"\n=== 销售出库单查询结果 ===")
-            print(f"总记录数: {count}")
-            print(f"本页记录数: {len(data_list)}")
+            #print(f"\n=== 销售出库单查询结果 ===")
+            #print(f"总记录数: {count}")
+            #print(f"本页记录数: {len(data_list)}")
             
             # if sum_info:
             #     print(f"汇总信息:")

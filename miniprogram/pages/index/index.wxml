@@ -1,57 +1,112 @@
 <view class="container">
 
-  <!-- 订单列表 -->
-  <scroll-view class="order-list" scroll-y="true" refresher-enabled="{{true}}" refresher-triggered="{{isRefreshing}}" bindrefresherrefresh="onRefresh" bindscrolltolower="onLoadMore">
-    <view wx:if="{{orderList.length === 0 && !isLoading}}" class="empty-state">
-      <image class="empty-icon" src="/images/icon-empty.png"></image>
-      <text class="empty-text">暂无订单数据</text>
-      <text class="empty-subtext">您可以尝试搜索或下拉刷新</text>
-    </view>
-    
-    <view wx:else class="order-items">
-      <view class="order-item" wx:for="{{orderList}}" wx:key="orderId" data-order="{{item}}" bindtap="onOrderClick">
-        <view class="order-header">
-          <text class="order-no">订单号：{{item.orderNo}}</text>
-          <text class="order-status {{item.status}}">{{item.statusText}}</text>
+  <!-- 主体内容：左右分栏 -->
+  <view class="main-content" wx:if="{{orderList.length > 0 || isLoading}}">
+    <!-- 左侧导航 -->
+    <scroll-view scroll-y class="side-menu">
+      <view 
+        wx:for="{{orderGroups}}" 
+        wx:key="id" 
+        class="menu-item {{activeGroupId === item.id ? 'active' : ''}}"
+        data-id="{{item.id}}"
+        bindtap="onMenuClick"
+      >
+        <text class="menu-title">{{item.title}}</text>
+        <text class="menu-count" wx:if="{{item.count > 0}}">{{item.count}}</text>
+      </view>
+    </scroll-view>
+
+    <!-- 右侧列表 -->
+    <scroll-view 
+      scroll-y 
+      class="content-area" 
+      scroll-into-view="{{scrollIntoViewId}}" 
+      scroll-with-animation
+      bindscrolltolower="onReachBottom"
+    >
+      <view class="group-list">
+        <view 
+          wx:for="{{orderGroups}}" 
+          wx:key="id" 
+          wx:for-item="group"
+          class="order-group" 
+          id="group-{{group.id}}"
+        >
+          <!-- 分组标题 -->
+          <view class="group-header" data-id="{{group.id}}" bindtap="toggleGroup">
+            <text class="group-title">{{group.title}}</text>
+            <view class="group-action">
+              <text class="group-count">{{group.count}}单</text>
+              <text class="group-arrow {{group.isExpanded ? 'expanded' : ''}}">▼</text>
+            </view>
+          </view>
+
+          <!-- 分组内容 -->
+          <view class="group-content" hidden="{{!group.isExpanded}}">
+            <view wx:if="{{group.orders.length === 0}}" class="group-empty">
+              <text>暂无订单</text>
+            </view>
+            <view wx:else class="order-items">
+              <view class="order-item" wx:for="{{group.orders}}" wx:key="orderId" data-order="{{item}}" bindtap="onOrderClick">
+                <view class="order-header">
+                  <text class="order-no">订单号：{{item.orderNo}}</text>
+                  <text class="order-status {{item.status}}">{{item.statusText}}</text>
+                </view>
+                
+                <view class="order-info">
+                  <view class="info-item">
+                    <text class="info-label">订单金额：</text>
+                    <text class="info-value price">{{item.rmbAmount}}</text>
+                  </view>
+                  <view class="info-item">
+                    <text class="info-label">下单日期：</text>
+                    <text class="info-value">{{item.orderDate}}</text>
+                  </view>
+                  <view class="info-item">
+                    <text class="info-label">交货日期：</text>
+                    <text class="info-value">{{item.deliveryDate}}</text>
+                  </view>
+                  <view class="info-item" wx:if="{{item.remark}}">
+                    <text class="info-label">备注信息：</text>
+                    <text class="info-value remark">{{item.remark}}</text>
+                  </view>
+                </view>
+                
+                <view class="material-preview">
+                  <view class="material-item" wx:for="{{item.materials.slice(0, 3)}}" wx:key="materialId" wx:for-item="material">
+                    <text class="material-code">{{material.code}}</text>
+                    <text class="material-status {{material.status}}">{{material.statusText}}</text>
+                  </view>
+                  <text wx:if="{{item.materials.length > 3}}" class="material-more">+{{item.materials.length - 3}}更多</text>
+                </view>
+                
+                <view class="order-progress">
+                  <text class="progress-label">发货进度</text>
+                  <view class="progress-bar">
+                    <view class="progress-fill" style="width: {{item.shippedRate}}%"></view>
+                  </view>
+                  <text class="progress-text">{{item.shippedRate}}%</text>
+                  <text class="delivery-status-tag status-{{item.deliveryStatus}}">{{item.deliveryStatusText}}</text>
+                </view>
+              </view>
+            </view>
+          </view>
         </view>
         
-        <view class="order-info">
-          <view class="info-item">
-            <text class="info-label">客户：</text>
-            <text class="info-value">{{item.customerName}}</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">下单时间：</text>
-            <text class="info-value">{{item.orderDate}}</text>
-          </view>
-          <view class="info-item">
-            <text class="info-label">物料数量：</text>
-            <text class="info-value">{{item.materialCount}}种</text>
-          </view>
-        </view>
-        
-        <view class="material-preview">
-          <view class="material-item" wx:for="{{item.materials.slice(0, 3)}}" wx:key="materialId" wx:for-item="material">
-            <text class="material-code">{{material.code}}</text>
-            <text class="material-status {{material.status}}">{{material.statusText}}</text>
-          </view>
-          <text wx:if="{{item.materials.length > 3}}" class="material-more">+{{item.materials.length - 3}}更多</text>
-        </view>
-        
-        <view class="order-progress">
-          <view class="progress-bar">
-            <view class="progress-fill" style="width: {{item.progress}}%"></view>
-          </view>
-          <text class="progress-text">{{item.progress}}%</text>
+        <view wx:if="{{isLoadingMore}}" class="loading-more">
+          <view class="loading-spinner"></view>
+          <text class="loading-text">加载中...</text>
         </view>
       </view>
-      
-      <view wx:if="{{isLoadingMore}}" class="loading-more">
-        <view class="loading-spinner"></view>
-        <text class="loading-text">加载中...</text>
-      </view>
-    </view>
-  </scroll-view>
+    </scroll-view>
+  </view>
+
+  <!-- 空状态 -->
+  <view wx:elif="{{!isLoading}}" class="empty-state">
+    <image class="empty-icon" src="/images/icon-empty.png"></image>
+    <text class="empty-text">暂无订单数据</text>
+    <text class="empty-subtext">您可以尝试搜索或下拉刷新</text>
+  </view>
 </view>
 
 <!-- 加载遮罩 -->
@@ -74,4 +129,4 @@
       <button class="bind-btn" bindtap="onBindCompanyTap">绑定</button>
     </view>
   </view>
-  </view>
+</view>

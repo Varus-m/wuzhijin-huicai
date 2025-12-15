@@ -1,7 +1,7 @@
 <view class="login-container">
   <view class="header-section">
     <image class="logo" src="/images/logo.png" mode="aspectFit"></image>
-    <text class="title">零材料货物追踪</text>
+    <text class="title">惠采订单信息查询平台</text>
     <text class="subtitle">实时追踪您的订单状态</text>
   </view>
 

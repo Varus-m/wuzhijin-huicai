@@ -11,7 +11,7 @@
   ],
   "window": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "零材料货物追踪",
+    "navigationBarTitleText": "惠采订单信息查询平台",
     "navigationBarBackgroundColor": "#ffffff",
     "backgroundTextStyle": "dark",
     "enablePullDownRefresh": true
@@ -25,10 +25,6 @@
       {
         "pagePath": "pages/index/index",
         "text": "首页"
-      },
-      {
-        "pagePath": "pages/orders/orders",
-        "text": "订单"
       },
       {
         "pagePath": "pages/messages/messages",

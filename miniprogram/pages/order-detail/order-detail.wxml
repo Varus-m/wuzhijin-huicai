@@ -27,8 +27,69 @@
     <view wx:if="{{materials.length === 0}}" class="empty">暂无物料数据</view>
     <view wx:else>
       <view class="material-item" wx:for="{{materials}}" wx:key="materialId">
-        <text class="code">{{item.code}}</text>
-        <text class="mstatus">{{item.statusText}}</text>
+        <view class="material-header">
+          <text class="code">{{item.code}}</text>
+          <text class="mstatus">{{item.statusText}}</text>
+        </view>
+        <view class="material-info" wx:if="{{item.name}}">
+          <text class="name">{{item.name}}</text>
+        </view>
+        <view class="material-qty">
+          <text>总量: {{item.quantity}}</text>
+          <text>已产: {{item.producedQuantity}}</text>
+          <text>已发: {{item.shippedQuantity}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="section-title" wx:if="{{deliveryOrders.length > 0}}">发运详情</view>
+  <view class="delivery-list" wx:if="{{deliveryOrders.length > 0}}">
+    <view class="delivery-card" wx:for="{{deliveryOrders}}" wx:key="index" wx:for-item="delivery">
+      <view class="delivery-header">
+        <text class="date">{{delivery.deliveryDate}}</text>
+        <text class="logistics">{{delivery.logisticsCompany}} {{delivery.logisticsCode}}</text>
+      </view>
+      
+      <view class="delivery-info">
+        <view class="info-row" wx:if="{{delivery.address}}">
+          <text class="label">地址：</text>
+          <text class="val">{{delivery.address}}</text>
+        </view>
+        <view class="info-row" wx:if="{{delivery.remark}}">
+          <text class="label">备注：</text>
+          <text class="val">{{delivery.remark}}</text>
+        </view>
+      </view>
+
+      <view class="delivery-products">
+        <view class="dp-header">
+          <text class="dp-name">产品名称</text>
+          <text class="dp-spec">规格</text>
+          <text class="dp-qty">数量</text>
+        </view>
+        <view class="dp-item" wx:for="{{delivery.products}}" wx:key="index" wx:for-item="prod">
+          <text class="dp-name">{{prod.productName}}</text>
+          <text class="dp-spec">{{prod.spec}}</text>
+          <text class="dp-qty">{{prod.quantity}}</text>
+        </view>
+      </view>
+
+      <view class="delivery-attachments" wx:if="{{delivery.attachments.length > 0}}">
+        <text class="att-title">附件：</text>
+        <view class="att-list">
+          <image 
+            wx:for="{{delivery.attachments}}" 
+            wx:key="*this" 
+            wx:for-item="imgUrl" 
+            src="{{imgUrl}}" 
+            mode="aspectFill" 
+            class="att-img"
+            data-url="{{imgUrl}}"
+            data-urls="{{delivery.attachments}}"
+            bindtap="onPreviewImage"
+          ></image>
+        </view>
       </view>
     </view>
   </view>
