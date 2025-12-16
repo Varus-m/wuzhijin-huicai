@@ -210,7 +210,7 @@ Page({
   onOrderClick(e: any) {
     const order = e.currentTarget.dataset.order;
     wx.navigateTo({
-      url: `/pages/order-detail/order-detail?orderId=${order.orderId}`
+      url: `/pages/order-detail/order-detail?orderNo=${order.orderNo}`
     });
   },
 

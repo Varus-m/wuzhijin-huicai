@@ -68,7 +68,7 @@ Page({
 
   onOrderClick(e: any) {
     const order = e.currentTarget.dataset.order
-    wx.navigateTo({ url: `/pages/order-detail/order-detail?orderId=${order.orderId}` })
+    wx.navigateTo({ url: `/pages/order-detail/order-detail?orderNo=${order.orderNo}` })
   },
 
   async loadOrders(isLoadMore = false) {

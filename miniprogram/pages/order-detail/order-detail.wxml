@@ -1,44 +1,26 @@
 <view class="container">
+  <view class="top-bg"></view>
   <view class="order-card">
-    <view class="row">
-      <text class="label">订单号</text>
-      <text class="value">{{orderNo}}</text>
+    <view class="card-header">
+      <text class="title">订单信息</text>
+      <view class="status-tag">{{statusText}}</view>
     </view>
-    <view class="row">
-      <text class="label">客户</text>
-      <text class="value">{{customerName}}</text>
-    </view>
-    <view class="row">
-      <text class="label">下单日期</text>
-      <text class="value">{{orderDate}}</text>
-    </view>
-    <view class="row">
-      <text class="label">状态</text>
-      <text class="status">{{statusText}}</text>
-    </view>
-    <view class="progress">
-      <view class="progress-bar"><view class="progress-fill" style="width: {{progress}}%"></view></view>
-      <text class="progress-text">{{progress}}%</text>
-    </view>
-  </view>
-
-  <view class="section-title">物料列表</view>
-  <view class="material-list">
-    <view wx:if="{{materials.length === 0}}" class="empty">暂无物料数据</view>
-    <view wx:else>
-      <view class="material-item" wx:for="{{materials}}" wx:key="materialId">
-        <view class="material-header">
-          <text class="code">{{item.code}}</text>
-          <text class="mstatus">{{item.statusText}}</text>
-        </view>
-        <view class="material-info" wx:if="{{item.name}}">
-          <text class="name">{{item.name}}</text>
-        </view>
-        <view class="material-qty">
-          <text>总量: {{item.quantity}}</text>
-          <text>已产: {{item.producedQuantity}}</text>
-          <text>已发: {{item.shippedQuantity}}</text>
-        </view>
+    <view class="card-body">
+      <view class="row">
+        <text class="label">订单号</text>
+        <text class="value copyable">{{orderNo}}</text>
+      </view>
+      <view class="row">
+        <text class="label">客户名称</text>
+        <text class="value">{{customerName}}</text>
+      </view>
+      <view class="row">
+        <text class="label">订单金额</text>
+        <text class="value money">¥{{rmbAmount}}</text>
+      </view>
+      <view class="row">
+        <text class="label">下单日期</text>
+        <text class="value">{{orderDate}}</text>
       </view>
     </view>
   </view>
@@ -47,34 +29,31 @@
   <view class="delivery-list" wx:if="{{deliveryOrders.length > 0}}">
     <view class="delivery-card" wx:for="{{deliveryOrders}}" wx:key="index" wx:for-item="delivery">
       <view class="delivery-header">
-        <text class="date">{{delivery.deliveryDate}}</text>
-        <text class="logistics">{{delivery.logisticsCompany}} {{delivery.logisticsCode}}</text>
+        <text class="date">发货记录 {{index + 1}}</text>
       </view>
       
       <view class="delivery-info">
+        <view class="info-row">
+          <text class="label">发货日期</text>
+          <text class="val">{{delivery.deliveryDate}}</text>
+        </view>
+        <view class="info-row">
+          <text class="label">物流公司</text>
+          <text class="val">{{delivery.logisticsCompany}}</text>
+        </view>
+        <view class="info-row" wx:if="{{delivery.logisticsCode}}">
+          <text class="label">物流单号</text>
+          <text class="val copyable">{{delivery.logisticsCode}}</text>
+        </view>
         <view class="info-row" wx:if="{{delivery.address}}">
-          <text class="label">地址：</text>
+          <text class="label">收货地址</text>
           <text class="val">{{delivery.address}}</text>
         </view>
         <view class="info-row" wx:if="{{delivery.remark}}">
-          <text class="label">备注：</text>
+          <text class="label">备注信息</text>
           <text class="val">{{delivery.remark}}</text>
         </view>
       </view>
-
-      <view class="delivery-products">
-        <view class="dp-header">
-          <text class="dp-name">产品名称</text>
-          <text class="dp-spec">规格</text>
-          <text class="dp-qty">数量</text>
-        </view>
-        <view class="dp-item" wx:for="{{delivery.products}}" wx:key="index" wx:for-item="prod">
-          <text class="dp-name">{{prod.productName}}</text>
-          <text class="dp-spec">{{prod.spec}}</text>
-          <text class="dp-qty">{{prod.quantity}}</text>
-        </view>
-      </view>
-
       <view class="delivery-attachments" wx:if="{{delivery.attachments.length > 0}}">
         <text class="att-title">附件：</text>
         <view class="att-list">
@@ -91,6 +70,27 @@
           ></image>
         </view>
       </view>
+      <view class="delivery-products">
+        <view class="products-title">产品清单</view>
+        <view class="product-table">
+          <view class="pt-header">
+            <text class="col-name">产品名称</text>
+            <text class="col-spec">规格</text>
+            <text class="col-qty">数量</text>
+          </view>
+          <view class="pt-row" wx:for="{{delivery.products}}" wx:key="index" wx:for-item="prod">
+            <view class="col-name">
+              <text class="name-text">{{prod.productName}}</text>
+            </view>
+            <view class="col-spec">
+              <text class="spec-tag" wx:if="{{prod.spec}}">{{prod.spec}}</text>
+            </view>
+            <text class="col-qty">{{prod.quantity}}</text>
+          </view>
+        </view>
+      </view>
+
+      
     </view>
   </view>
 </view>

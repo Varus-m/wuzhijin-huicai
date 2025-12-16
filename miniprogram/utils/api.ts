@@ -163,9 +163,9 @@ export const orderAPI = {
   /**
    * 获取订单详情
    */
-  async getOrderDetail(orderId: string) {
+  async getOrderDetail(orderNo: string) {
     return request({
-      url: `/api/orders/${orderId}/status`,
+      url: `/api/orders/${orderNo}/detail`,
       method: 'GET'
     })
   },

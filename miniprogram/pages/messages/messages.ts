@@ -18,6 +18,7 @@ interface MessageItem {
     text: string;
     url?: string;
     orderId?: string;
+    orderNo?: string;
   };
 }
 
@@ -193,9 +194,12 @@ Page({
     
     switch (action.type) {
       case 'navigate':
-        if (action.orderId) {
+        // 优先使用 orderNo，如果 action 中有 orderId 但其实是 orderNo 的值，也传给 orderNo 参数
+        // 假设 action 对象结构可能包含 orderId 或 orderNo
+        const targetOrderNo = action.orderNo || action.orderId;
+        if (targetOrderNo) {
           wx.navigateTo({
-            url: `/pages/order-detail/order-detail?orderId=${action.orderId}`
+            url: `/pages/order-detail/order-detail?orderNo=${targetOrderNo}`
           });
         }
         break;

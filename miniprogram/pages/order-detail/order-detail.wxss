@@ -1,43 +1,334 @@
-.container{padding:12px;padding-bottom: 40rpx;}
-.order-card{border:1px solid #f0f0f0;border-radius:8px;padding:10px;margin-bottom:12px;background: #fff;}
-.row{display:flex;justify-content:space-between;margin:6px 0}
-.label{color:#888;font-size: 28rpx;}
-.value{color:#333;font-size: 28rpx;}
-.status{color:#1890FF;font-weight: 500;}
-.progress{display:flex;align-items:center;gap:8px;margin-top:8px}
-.progress-bar{flex:1;height:6px;background:#f5f5f5;border-radius:6px;overflow: hidden;}
-.progress-fill{height:6px;background:#52c41a;border-radius:6px}
-.section-title{font-weight:600;margin:24rpx 0 16rpx;font-size: 32rpx;color: #333;}
-.material-item{display:flex;flex-direction: column;border-bottom:1px solid #f5f5f5;padding:16rpx 0;}
-.material-header {display: flex;justify-content: space-between;margin-bottom: 8rpx;}
-.code{color:#333;font-weight: 500;}
-.mstatus{color:#666;font-size: 24rpx;}
-.material-info {color: #666;font-size: 26rpx;margin-bottom: 8rpx;}
-.material-qty {display: flex;gap: 24rpx;font-size: 24rpx;color: #888;}
-.empty{color:#888;padding:12px;text-align: center;}
-.loading-overlay{position:fixed;left:0;right:0;top:0;bottom:0;background:rgba(255,255,255,0.6);display:flex;justify-content:center;align-items:center;z-index: 1000;}
+page {
+  background-color: #f7f8fa;
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
+    sans-serif;
+}
 
-/* 发运详情样式 */
-.delivery-list {display: flex;flex-direction: column;gap: 24rpx;}
-.delivery-card {background: #fff;border-radius: 12rpx;padding: 24rpx;box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);}
-.delivery-header {display: flex;justify-content: space-between;margin-bottom: 16rpx;border-bottom: 1rpx solid #f0f0f0;padding-bottom: 16rpx;}
-.delivery-header .date {font-size: 28rpx;color: #333;font-weight: 500;}
-.delivery-header .logistics {font-size: 26rpx;color: #667eea;font-weight: 500;}
-.delivery-info {margin-bottom: 24rpx;}
-.info-row {display: flex;font-size: 26rpx;margin-bottom: 8rpx;color: #666;}
-.info-row .label {color: #888;min-width: 80rpx;}
-.info-row .val {flex: 1;}
+.container {
+  display: block;
+  padding: 24rpx;
+  padding-bottom: 60rpx;
+  position: relative;
+  z-index: 1;
+}
 
-.delivery-products {background: #f8f9fa;border-radius: 8rpx;padding: 16rpx;margin-bottom: 16rpx;}
-.dp-header {display: flex;font-size: 24rpx;color: #888;margin-bottom: 12rpx;}
-.dp-item {display: flex;font-size: 26rpx;color: #333;margin-bottom: 8rpx;}
-.dp-item:last-child {margin-bottom: 0;}
-.dp-name {flex: 1;}
-.dp-spec {width: 200rpx;text-align: center;color: #666;}
-.dp-qty {width: 100rpx;text-align: right;}
+.top-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 240rpx;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  z-index: -1;
+  border-bottom-left-radius: 40rpx;
+  border-bottom-right-radius: 40rpx;
+}
 
-.delivery-attachments {border-top: 1rpx dashed #eee;padding-top: 16rpx;}
-.att-title {font-size: 26rpx;color: #888;margin-bottom: 12rpx;display: block;}
-.att-list {display: flex;flex-wrap: wrap;gap: 16rpx;}
-.att-img {width: 160rpx;height: 160rpx;border-radius: 8rpx;background: #f0f0f0;}
+/* 通用卡片样式 */
+.order-card, .delivery-card {
+  background: #ffffff;
+  border-radius: 16rpx;
+  padding: 0;
+  margin-bottom: 24rpx;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  border: none;
+}
 
+/* 订单卡片特有样式 */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24rpx 30rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  background: #fff;
+}
+
+.card-header .title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.status-tag {
+  background: #e6f7ff;
+  color: #1890ff;
+  font-size: 24rpx;
+  padding: 4rpx 16rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.card-body {
+  padding: 24rpx 30rpx;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
+  font-size: 28rpx;
+  line-height: 1.5;
+}
+
+.row:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  color: #999;
+  min-width: 140rpx;
+}
+
+.value {
+  color: #333;
+  text-align: right;
+  flex: 1;
+}
+
+.value.copyable {
+  font-family: Consolas, monospace;
+  color: #333;
+}
+
+.value.money {
+  color: #ff4d4f;
+  font-weight: 600;
+  font-family: Consolas, monospace;
+}
+
+/* 标题样式 */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  margin: 32rpx 12rpx 20rpx;
+  display: flex;
+  align-items: center;
+}
+
+.section-title::before {
+  content: '';
+  width: 8rpx;
+  height: 28rpx;
+  background: #1890ff;
+  border-radius: 4rpx;
+  margin-right: 12rpx;
+}
+
+/* 发运详情列表 */
+.delivery-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+.delivery-card {
+  padding: 30rpx;
+}
+
+.delivery-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24rpx;
+  padding-bottom: 20rpx;
+  border-bottom: 1rpx dashed #eee;
+}
+
+.delivery-header .date {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.delivery-header .logistics-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.delivery-header .logistics-comp {
+  font-size: 26rpx;
+  color: #1890ff;
+  background: rgba(24, 144, 255, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: 6rpx;
+  margin-bottom: 4rpx;
+}
+
+.delivery-header .logistics-no {
+  font-size: 24rpx;
+  color: #666;
+  font-family: Consolas, monospace;
+}
+
+.delivery-info {
+  margin-bottom: 24rpx;
+}
+
+.info-row {
+  display: flex;
+  font-size: 26rpx;
+  margin-bottom: 12rpx;
+  line-height: 1.5;
+}
+
+.info-row .label {
+  color: #999;
+  min-width: 140rpx; /* 调整宽度，确保4-5个字对齐 */
+  flex-shrink: 0;
+}
+
+.info-row .val {
+  color: #333;
+  flex: 1;
+}
+
+.info-row .val.copyable {
+  font-family: Consolas, monospace;
+}
+
+/* 产品列表表格化 */
+.delivery-products {
+  background: #ffffff;
+  border-radius: 12rpx;
+  padding: 0;
+  margin-bottom: 24rpx;
+  margin-top: 24rpx;
+}
+
+.products-title {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 20rpx;
+  padding-left: 12rpx;
+  border-left: 6rpx solid #667eea;
+  line-height: 1;
+}
+
+.product-table {
+  border: 1rpx solid #eee;
+  border-radius: 12rpx;
+  overflow: hidden;
+}
+
+.pt-header {
+  display: flex;
+  background: #f8f9fa;
+  padding: 16rpx 24rpx;
+  border-bottom: 1rpx solid #eee;
+}
+
+.pt-header text {
+  font-size: 24rpx;
+  color: #666;
+  font-weight: 500;
+}
+
+.pt-row {
+  display: flex;
+  padding: 24rpx;
+  border-bottom: 1rpx solid #f5f5f5;
+  align-items: center;
+  background: #fff;
+}
+
+.pt-row:last-child {
+  border-bottom: none;
+}
+
+/* 列宽定义 */
+.col-name {
+  flex: 4; /* 40% */
+  padding-right: 16rpx;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 500;
+  /* 处理长文本 */
+  word-break: break-all;
+}
+
+.col-spec {
+  flex: 3; /* 30% */
+  padding-right: 16rpx;
+  display: flex;
+  align-items: center;
+}
+
+.col-qty {
+  flex: 1.5; /* 15% */
+  text-align: right;
+  font-size: 26rpx;
+  color: #333;
+  font-weight: 600;
+  font-family: Consolas, monospace;
+}
+
+.spec-tag {
+  font-size: 22rpx;
+  color: #666;
+  background: #f0f2f5;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  display: inline-block;
+  max-width: 100%;
+  /* 允许规格文字换行 */
+  white-space: normal;
+  word-break: break-all;
+}
+
+/* 附件样式 */
+.delivery-attachments {
+  border-top: 1rpx solid #f5f5f5;
+  padding-top: 20rpx;
+}
+
+.att-title {
+  font-size: 26rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+  display: block;
+  font-weight: 500;
+}
+
+.att-list {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16rpx;
+}
+
+.att-img {
+  width: 100%;
+  height: 150rpx;
+  border-radius: 8rpx;
+  background: #eee;
+  object-fit: cover;
+  border: 1rpx solid #f0f0f0;
+}
+
+/* 加载中 */
+.loading-overlay {
+  position: fixed;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+
+.loading-content {
+  font-size: 28rpx;
+  color: #666;
+  background: #fff;
+  padding: 20rpx 40rpx;
+  border-radius: 30rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0,0,0,0.1);
+}

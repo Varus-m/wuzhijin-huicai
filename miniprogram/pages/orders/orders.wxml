@@ -1,4 +1,5 @@
 <view class="container">
+  <view class="top-bg"></view>
   <view class="search-section">
     <view class="search-bar">
       <input class="search-input" placeholder="输入订单号/客户名" value="{{searchKeyword}}" bindinput="onSearchInput" bindconfirm="onSearch" confirm-type="search" />

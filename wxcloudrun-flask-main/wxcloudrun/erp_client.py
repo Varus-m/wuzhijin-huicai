@@ -50,14 +50,14 @@ class ErpClient:
         
         # 关键词搜索 (模糊匹配需API支持，这里假设支持或只精确匹配)
         # Snowbeasts API condition 似乎是精确匹配。如果是模糊搜索可能需要特殊语法
+        # 状态过滤
+        filters = {"customerId": customer_id}
+
         if keyword:
             # 尝试同时匹配订单号或客户订单号
             # 注意：如果API不支持OR查询，可能需要多次查询或仅匹配一个字段
-            #condition["code"] = keyword 
-            pass
-        
-        # 状态过滤
-        filters = {"customerId": customer_id}
+            filters["systemFulltext"] = keyword 
+
         if status:
             # 假设 status 传入的是数字或需要映射
             # 示例: 1:未开始, 2:进行中, 4:已完成, 5:已取消 (参考 snowbeasts_apis.py 中的 defaults)
@@ -75,6 +75,8 @@ class ErpClient:
         # 转换返回格式适配前端
         orders = []
         total = 0
+        logger.info(f"search_orders filters: {filters}")
+        logger.info(f"search_orders result: {result}")
         
         if "data" in result and result["data"].get("_dataList"):
             data = result["data"]
@@ -185,38 +187,45 @@ class ErpClient:
             "total": total
         }
 
-    def get_order_detail(self, order_id: str) -> Dict[str, Any]:
+    def get_order_detail(self, order_no: str) -> Dict[str, Any]:
         """获取订单详情"""
-        result = self.api.get_order_with_lines(order_id)
+        # 1. 查询销售订单信息 (formId=100001)
+        order_info = {}
+        real_order_no = order_no
         
-        if result.get("error"):
-            return {"success": False, "error": result["error"]}
+        # 构造查询条件
+        # 精确匹配 systemFulltext
+        filters = {"systemFulltext": order_no}
+        
+        order_res = self.api.get_sales_order_page_list(
+            form_id=100001,
+            filters=filters,
+            page_size=1
+        )
             
-        header = result.get("order_header", {})
-        lines = result.get("order_lines", {}).get("data", {}).get("_dataList", [])
-        
-        # 转换格式
-        materials = []
-        for line in lines:
-            materials.append({
-                "material_id": line.get("id"),
-                "material_code": line.get("productCode"),
-                "material_name": line.get("productName"),
-                "quantity": line.get("quantity"),
-                "produced_quantity": line.get("producedQuantity"),
-                "shipped_quantity": line.get("shippedQuantity"),
-                "status": line.get("status")
-            })
-        
-        # 获取发运单详情
+        if order_res.get("data", {}).get("_dataList"):
+            item = order_res["data"]["_dataList"][0]
+            real_order_no = item.get("code")
+            order_info = {
+                "order_id": item.get("id"),
+                "order_no": item.get("code"),
+                "status": item.get("status"),
+                "created_at": item.get("date"),
+                "customer_name": item.get("customerName"),
+                "rmb_amount": item.get("rmbAmount")
+            }
+        else:
+            # 查不到订单，可能 order_no 不对，或者权限问题
+            # 这里选择返回 order_no 继续查发运单（如果用户只关心发运单）
+            order_info = {"order_no": order_no}
+
+        # 2. 获取发运单详情
         delivery_orders = []
-        order_code = header.get("code")
-        if order_code:
-            # 1. 查询SO对应的所有发运单
-            # 查询条件有SO: filters: {systemFulltext: "SO2025121502"}
-            do_filters = {"systemFulltext": order_code}
+        if real_order_no:
+            # 查询SO对应的所有发运单
+            # 查询条件有SO: filters: {systemFulltext: "SO..."}
+            do_filters = {"systemFulltext": real_order_no}
             
-            # 注意：get_sales_delivery_orders 内部使用的是 filters 透传
             do_result = self.api.get_sales_delivery_orders(
                 page_size=100,
                 filters=do_filters
@@ -225,8 +234,7 @@ class ErpClient:
             if "data" in do_result and do_result["data"].get("_dataList"):
                 raw_delivery_orders = do_result["data"].get("_dataList", [])
                 
-                # 预先获取物流公司列表（缓存以优化性能，这里简单起见每次获取，或者可以做类级别缓存）
-                # 注意：如果物流公司很多，page_size 需要足够大
+                # 预先获取物流公司列表
                 logistics_result = self.api.get_logistics_companies(page_size=1000)
                 logistics_map = {} # {id: name}
                 if "data" in logistics_result and logistics_result["data"].get("_dataList"):
@@ -236,28 +244,19 @@ class ErpClient:
                 for do_item in raw_delivery_orders:
                     do_id = str(do_item.get("id"))
                     
-                    # 2. 获取出库单详情（实际上 raw_delivery_orders 已经是列表详情了，但为了严谨或获取更多字段，
-                    # 题目要求 "根据查询到的id，去查询出库单详情get_delivery_order_detail"。
-                    # 如果 get_sales_delivery_orders 返回的字段不够全，才需要再查一次。
-                    # 根据 snowbeasts_client.py，get_sales_delivery_orders 返回的字段已经包含了 required fields。
-                    # 但为了遵循 "根据查询到的id，去查询出库单详情" 的指引，我们还是调用一下，或者直接复用。
-                    # 考虑到性能，直接复用列表数据通常足够。但如果 get_delivery_order_detail 有特殊逻辑，则调用。
-                    # 这里为了完全符合要求，我们调用 get_delivery_order_detail (虽然有点冗余)
-                    
+                    # 根据查询到的id，去查询出库单详情
                     detail_result = self.api.get_delivery_order_detail(do_id)
                     do_detail = {}
                     if detail_result.get("success") and "data" in detail_result:
                         do_detail = detail_result["data"]
                     else:
-                        do_detail = do_item # 降级使用列表数据
+                        do_detail = do_item # 降级
                     
-                    # 3. 获取物流公司名称
+                    # 获取物流公司名称
                     logistics_company_id = str(do_detail.get("logisticsCompanyId", ""))
                     logistics_company_name = logistics_map.get(logistics_company_id, "")
                     
-                    # 4. 处理附件
-                    # "attachments": ["35/xxx/xxx#size=...&name=..."]
-                    # 需转换为完整 URL: http://saas.snowbeasts.com/business/file/SnowInventory-82886/{path_without_params}
+                    # 处理附件
                     attachments = []
                     raw_attachments = do_detail.get("attachments")
                     if isinstance(raw_attachments, list):
@@ -268,7 +267,7 @@ class ErpClient:
                                 full_url = f"http://saas.snowbeasts.com/business/file/SnowInventory-82886/{file_path}"
                                 attachments.append(full_url)
                     
-                    # 5. 获取出库产品明细
+                    # 获取出库产品明细
                     products = []
                     prod_result = self.api.get_delivery_order_products(do_id)
                     if prod_result.get("success") and "data" in prod_result and prod_result["data"].get("_dataList"):
@@ -290,11 +289,7 @@ class ErpClient:
                     })
             
         return {
-            "order_id": header.get("id"),
-            "order_no": header.get("code"),
-            "status": header.get("status"),
-            "created_at": header.get("date"),
-            "materials": materials,
+            **order_info,
             "delivery_orders": delivery_orders
         }
 

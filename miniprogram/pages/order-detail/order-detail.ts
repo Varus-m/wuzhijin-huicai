@@ -1,12 +1,6 @@
 import { orderAPI } from '../../utils/api'
 import { showToast } from '../../utils/util'
 
-interface MaterialItem {
-  materialId: string
-  code: string
-  statusText: string
-}
-
 interface DeliveryProduct {
   productName: string;
   spec: string;
@@ -28,29 +22,29 @@ Page({
     orderId: '',
     orderNo: '',
     customerName: '',
+    rmbAmount: '',
     orderDate: '',
     statusText: '',
-    progress: 0,
-    materials: [] as MaterialItem[],
     deliveryOrders: [] as DeliveryOrder[],
     isLoading: false
   },
 
   onLoad(options: any) {
-    const { orderId } = options || {}
-    if (!orderId) {
-      showToast('缺少订单ID')
+    // 兼容 orderId 和 orderNo 参数，优先使用 orderNo
+    const orderNo = options.orderNo || options.orderId || ''
+    
+    if (!orderNo) {
+      showToast('缺少订单号')
       return
     }
-    this.setData({ orderId })
+    this.setData({ orderNo: orderNo }) // 这里为了兼容逻辑，暂时可以用 orderNo 覆盖之前的 orderId 逻辑，或者在 data 里新增 orderNo
     this.loadDetail()
   },
 
   async loadDetail() {
     this.setData({ isLoading: true })
     try {
-      // 现在的 getOrderDetail 已经包含了 materials 和 delivery_orders
-      const detail = await orderAPI.getOrderDetail(this.data.orderId)
+      const detail = await orderAPI.getOrderDetail(this.data.orderNo)
       
       if (!detail.success) {
         if ((detail as any).code === 'NEED_INVITE_BIND') {
@@ -66,34 +60,22 @@ Page({
       const deliveryOrders = (d.delivery_orders || []).map((doItem: any) => ({
         deliveryDate: this.formatDate(doItem.delivery_date),
         logisticsCompany: doItem.logistics_company || '-',
-        logisticsCode: doItem.logistics_code || '-',
-        address: doItem.address || '-',
+        logisticsCode: doItem.logistics_code || '', // 默认为空字符串，方便判断
+        address: doItem.address || '',
         remark: doItem.remark || '',
-        attachments: doItem.attachments || [],
+        // 清洗附件URL，去除可能的空格和反引号
+        attachments: (doItem.attachments || []).map((url: string) => url.replace(/[`\s]/g, '')),
         products: doItem.products || []
       }))
 
       this.setData({
         orderNo: d.order_no,
-        customerName: d.customer_name, // 注意：后端返回可能没有这个字段，需确认
+        customerName: d.customer_name,
+        rmbAmount: this.formatMoney(d.rmb_amount),
         orderDate: this.formatDate(d.created_at || d.order_date),
         statusText: this.getOrderStatusText(d.status),
-        // 如果后端返回了 materials，则使用后端返回的计算进度，否则默认为0
-        progress: this.calculateProgress(d.materials || []),
         deliveryOrders: deliveryOrders
       })
-
-      const materialsSource = d.materials || []
-      const materials = materialsSource.map((m: any) => ({
-        materialId: m.material_id,
-        code: m.material_code,
-        name: m.material_name, // 新增
-        quantity: m.quantity, // 新增
-        producedQuantity: m.produced_quantity, // 新增
-        shippedQuantity: m.shipped_quantity, // 新增
-        statusText: this.getMaterialStatusText(m.status)
-      }))
-      this.setData({ materials })
     } catch (err: any) {
       console.error('Load order detail failed:', err)
       showToast(err?.message || '加载订单详情失败')
@@ -125,27 +107,16 @@ Page({
     return map[String(status)] || '待生产'
   },
 
-  getMaterialStatusText(status: string): string {
-    const map: { [key: string]: string } = {
-      pending: '待生产',
-      producing: '生产中',
-      completed: '已完成',
-      quality_check: '质检中'
-    }
-    return map[status] || '待生产'
-  },
-
-  calculateProgress(materials: any[]): number {
-    if (!materials || materials.length === 0) return 0
-    const completed = materials.filter(m => m.status === 'completed').length
-    return Math.round((completed / materials.length) * 100)
-  },
-
   formatDate(dateString: string): string {
     const date = new Date(dateString)
     const y = date.getFullYear()
     const m = String(date.getMonth() + 1).padStart(2, '0')
     const d = String(date.getDate()).padStart(2, '0')
     return `${y}-${m}-${d}`
+  },
+
+  formatMoney(amount: any): string {
+    if (amount === null || amount === undefined) return '0.00'
+    return Number(amount).toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }
 })

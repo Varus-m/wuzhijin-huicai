@@ -264,24 +264,24 @@ def search_orders():
         logger.error(f"搜索订单失败: {str(e)}")
         return jsonify(create_response(False, f"查询失败: {str(e)}")), 500
 
-@api_bp.route('/orders/<order_id>/status', methods=['GET'])
+@api_bp.route('/orders/<order_no>/detail', methods=['GET'])
 @limiter.limit("60 per minute")
 @verify_token
 @verify_invite_code
-def get_order_status(order_id: str):
-    """获取订单状态"""
+def get_order_detail(order_no: str):
+    """获取订单详情"""
     try:
         # 从 request 获取 openid (由 verify_token 注入)
         user_id = getattr(request, 'user_id', None)
         
         # 调用ERP接口获取订单状态
         erp_client = get_erp_client()
-        erp_result = erp_client.get_order_status(order_id)
+        erp_result = erp_client.get_order_detail(order_no)
         
         # 记录API调用
         log_api_call(
             user_id=user_id,
-            endpoint=f'/api/orders/{order_id}/status',
+            endpoint=f'/api/orders/{order_no}/detail',
             method='GET',
             status_code=200,
             response_time=0
@@ -290,7 +290,7 @@ def get_order_status(order_id: str):
         return jsonify(create_response(True, "查询成功", erp_result))
         
     except Exception as e:
-        logger.error(f"获取订单状态失败: {str(e)}")
+        logger.error(f"获取订单详情失败: {str(e)}")
         return jsonify(create_response(False, f"查询失败: {str(e)}")), 500
 
 @api_bp.route('/orders/<order_id>/materials', methods=['GET'])

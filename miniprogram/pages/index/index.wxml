@@ -49,7 +49,7 @@
             <view wx:else class="order-items">
               <view class="order-item" wx:for="{{group.orders}}" wx:key="orderId" data-order="{{item}}" bindtap="onOrderClick">
                 <view class="order-header">
-                  <text class="order-no">订单号：{{item.orderNo}}</text>
+                  <text class="order-no">{{item.orderNo}}</text>
                   <text class="order-status {{item.status}}">{{item.statusText}}</text>
                 </view>
                 
@@ -70,14 +70,6 @@
                     <text class="info-label">备注信息：</text>
                     <text class="info-value remark">{{item.remark}}</text>
                   </view>
-                </view>
-                
-                <view class="material-preview">
-                  <view class="material-item" wx:for="{{item.materials.slice(0, 3)}}" wx:key="materialId" wx:for-item="material">
-                    <text class="material-code">{{material.code}}</text>
-                    <text class="material-status {{material.status}}">{{material.statusText}}</text>
-                  </view>
-                  <text wx:if="{{item.materials.length > 3}}" class="material-more">+{{item.materials.length - 3}}更多</text>
                 </view>
                 
                 <view class="order-progress">

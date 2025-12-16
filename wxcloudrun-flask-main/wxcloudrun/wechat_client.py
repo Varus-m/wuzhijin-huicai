@@ -204,7 +204,7 @@ def send_order_status_notification(openid: str, order_data: Dict[str, Any]) -> b
             openid=openid,
             template_id=template_id,
             data=template_data,
-            page=f"/pages/order-detail/order-detail?id={order_data.get('order_id', '')}"
+            page=f"/pages/order-detail/order-detail?orderNo={order_data.get('order_no', '')}"
         )
         
         # 记录消息日志
